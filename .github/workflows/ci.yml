@@ -1,0 +1,14 @@
+name: TBB CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  foundation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify specifications and repository policy
+        run: make ci
