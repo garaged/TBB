@@ -12,9 +12,16 @@ TBB makes day-to-day budgeting quick, keeps sensitive amounts private on demand,
 - **No rent-seeking.** TBB has no paid tier, ads, trackers, or feature gates. Support is voluntary.
 - **Built to last.** Versioned exports, restore validation, deterministic calculations, and migration evidence are product requirements.
 
-## Project status
+## Development
 
-M0 — foundation and architecture is in progress. Product behavior is specified before implementation.
+The initial modular Swift package is deliberately small and testable:
+
+```bash
+swift test
+make ci
+```
+
+Open the package in Xcode to inspect its Apple-platform SwiftUI shell. The app project and signed device targets are added as M1 progresses.
 
 ## License
 

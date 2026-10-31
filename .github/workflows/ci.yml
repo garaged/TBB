@@ -7,8 +7,10 @@ on:
 
 jobs:
   foundation:
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
       - name: Verify specifications and repository policy
         run: make ci
+      - name: Run the deterministic Swift foundation tests
+        run: swift test
