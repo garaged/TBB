@@ -31,7 +31,7 @@ public struct TBBRootView: View {
                     .padding()
                     .navigationTitle("Overview")
                     .toolbar {
-                        ToolbarItem(placement: .topBarTrailing) {
+                        ToolbarItem(placement: .automatic) {
                             Button {
                                 privacyMode.toggle()
                             } label: {
