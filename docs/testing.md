@@ -3,8 +3,8 @@
 ## Automated layers
 
 1. **Specification:** registry links, required headings, traceability IDs.
-2. **Domain:** unit and property tests for money, ledger invariants, period navigation, and budget projections.
-3. **Persistence/sync:** schema migration, private/shared store isolation, offline replay, idempotence, and conflict fixtures.
+2. **Domain:** unit and property tests for currency-safe money, ledger invariants, period navigation, and budget projections.
+3. **Persistence/sync:** schema migration, private/shared store isolation, offline replay, idempotence, currency/rate history, and conflict fixtures.
 4. **Security:** Keychain access rules, lock lifecycle, backup cryptography vectors, redacted diagnostics.
 5. **UI/accessibility:** VoiceOver labels, Dynamic Type, privacy masking, iPhone snapshots, iPad layouts, Watch flows.
 6. **Performance:** operation-count and bounded-cache budgets, not flaky wall-clock simulator claims.
@@ -18,7 +18,8 @@
 - Two Apple Accounts sharing/accepting/revoking a household budget.
 - Offline edit then reconciliation.
 - Backup export, restore preview, successful restore, wrong-password rejection, and corrupted-file rejection.
+- Multi-currency transaction, historical-rate stability, English/Mexican-Spanish presentation, and budget-time-zone boundary checks.
 
 ## Localization matrix
 
-Test `en`, `en-US`, `es-MX`, `es-419`, and an unsupported locale fallback. No fatal localization assertions.
+Test `en`, `en-US`, `es-MX`, `es-419`, and an unsupported locale fallback. Validate long text, Dynamic Type, VoiceOver, reduced motion, high contrast, and no color-only meaning. No fatal localization assertions.

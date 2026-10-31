@@ -14,16 +14,19 @@ Give individuals and households a calm, quick, and trustworthy way to understand
 
 ## Product invariants
 
-- Monetary values use integer minor units plus ISO currency code; binary floating point is forbidden for accounting values.
+- Monetary values use integer minor units plus ISO 4217 currency code; binary floating point is forbidden for accounting values.
+- Each budget space has an explicit base currency, time zone, and period-start rule. Original transaction currencies and historical exchange rates remain immutable.
 - Privacy Mode masks every money amount in application-controlled UI, including charts, widgets, screenshots where supported, and watch surfaces.
 - An individual owns private budgets. A household budget is visible only to explicitly invited iCloud participants.
 - TBB never operates a financial-data service, creates TBB accounts, serves ads, or collects analytics.
 - Backup export is versioned, validates before restore, and can be encrypted with a user-selected backup password.
 - Local password/biometric lock is a local-device boundary. It is not a substitute for access control to a CloudKit household share.
+- Language and region preferences change presentation only. They never silently change stored financial values, reporting periods, or original transaction history.
 
 ## Non-goals for v1
 
 - Banking aggregation, card payments, investment advice, credit decisions, tax filing, web/Android clients, or a TBB cloud account.
+- Live exchange-rate feeds. User-entered rates preserve the no-account/no-cost core; optional providers require a later ADR.
 - Public, link-open household budgets.
 - Paid features or sponsorship-driven behavior.
 
