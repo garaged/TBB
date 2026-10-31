@@ -7,8 +7,16 @@ on:
 
 jobs:
   foundation:
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
       - name: Verify specifications and repository policy
         run: make ci
+      - name: Run the deterministic Swift foundation tests
+        run: swift test
+      - name: Install XcodeGen
+        run: brew install xcodegen
+      - name: Generate the Apple project
+        run: xcodegen generate
+      - name: Build the universal iPhone and iPad app target
+        run: xcodebuild -project TBB.xcodeproj -scheme TBB -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' build CODE_SIGNING_ALLOWED=NO
