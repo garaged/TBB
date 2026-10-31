@@ -14,14 +14,17 @@ TBB makes day-to-day budgeting quick, keeps sensitive amounts private on demand,
 
 ## Development
 
-The initial modular Swift package is deliberately small and testable:
+The foundation is a strict-concurrency Swift package plus a reproducible universal iPhone/iPad app project:
 
 ```bash
 swift test
 make ci
+brew install xcodegen
+xcodegen generate
+open TBB.xcodeproj
 ```
 
-Open the package in Xcode to inspect its Apple-platform SwiftUI shell. The app project and signed device targets are added as M1 progresses.
+The generated app target supports iPhone and iPad. The watchOS companion target is added with the Watch milestone, after the ledger and privacy-safe glance contracts exist.
 
 ## License
 
