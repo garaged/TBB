@@ -13,6 +13,10 @@ targets:
     platform: iOS
     sources:
       - path: Sources/TBBFoundation
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: org.garaged.TBBFoundation
+        GENERATE_INFOPLIST_FILE: YES
   TBB:
     type: application
     platform: iOS
