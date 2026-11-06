@@ -84,3 +84,4 @@ private struct SecuritySettingsView: View {
         }
     }
 }
+#endif
