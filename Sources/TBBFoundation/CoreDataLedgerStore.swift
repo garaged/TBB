@@ -169,7 +169,6 @@ public final class CoreDataLedgerStore {
 
     private func defaultSpace(baseCurrencyCode: String) throws -> NSManagedObject {
         let request = NSFetchRequest<NSManagedObject>(entityName: "BudgetSpace")
-        request.predicate = NSPredicate(format: "scope == %@", BudgetSpaceScope.privateSpace.rawValue)
         request.fetchLimit = 1
         request.affectedStores = privateStore.map { [$0] }
 
