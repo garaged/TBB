@@ -14,6 +14,8 @@ jobs:
         run: make ci
       - name: Run the deterministic Swift foundation tests
         run: swift test
+      - name: Generate the app icon
+        run: bash scripts/generate-app-icon.sh
       - name: Install XcodeGen
         run: brew install xcodegen
       - name: Generate the Apple project
