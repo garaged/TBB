@@ -9,6 +9,6 @@
 | TBB-I18N-001 | Localization, regional behavior, and accessible presentation | Draft | Locale/UI/accessibility tests |
 | TBB-SHR-001 | Household sharing | Draft | Sync and physical-device tests |
 | TBB-BKP-001 | Backup and restore | Planned | Compatibility/restore tests |
-| TBB-UX-001 | Dashboard time navigation | In progress | Navigator/insight tests + M3 manual acceptance |
+| TBB-UX-001 | Dashboard time navigation | Implemented | Navigator/insight tests + M3 manual acceptance |
 
 Specifications are normative once accepted. Implementation tasks and tests must cite their IDs.
