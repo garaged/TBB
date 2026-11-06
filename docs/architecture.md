@@ -6,19 +6,23 @@ TBB is an Apple-native, local-first modular monolith implemented in Swift. iPhon
 
 TBB uses Core Data backed by `NSPersistentCloudKitContainer`, with separate private and shared stores. This is intentional: Apple’s supported model for multi-user CloudKit sharing requires private/shared stores, history tracking, and remote-change handling. SwiftUI is the UI layer; domain services and repositories remain independent of it.
 
+M2 persists a versioned canonical `LedgerState` snapshot through Core Data. This gives users durable local data now while retaining a clean migration boundary: M5 replaces the local snapshot adapter with the private/shared CloudKit store adapter without changing money, ledger, or UI contracts.
+
 ```mermaid
 flowchart TB
   UI["SwiftUI apps\niPhone · iPad · Watch"]
   Features["Feature modules\nLedger · Budgets · Dashboards · Privacy"]
   Domain["Deterministic domain services\nminor-unit money · period math · validation"]
   Repos["Repository contracts"]
-  Private["Private persistent store"]
-  Shared["Shared persistent store"]
+  Local["Core Data ledger snapshot"]
+  Private["Future private store"]
+  Shared["Future shared store"]
   CK["User-owned CloudKit container"]
 
   UI --> Features --> Domain --> Repos
-  Repos --> Private --> CK
-  Repos --> Shared --> CK
+  Repos --> Local
+  Repos -. M5 migration .-> Private --> CK
+  Repos -. M5 sharing .-> Shared --> CK
 ```
 
 ## Module rules
