@@ -6,7 +6,7 @@ public enum BudgetCadence: String, CaseIterable, Codable, Sendable {
     case quarter
     case year
 
-    var dashboardPeriod: DashboardPeriod {
+    public var dashboardPeriod: DashboardPeriod {
         switch self {
         case .week: .week
         case .month: .month
