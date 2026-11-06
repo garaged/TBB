@@ -8,7 +8,7 @@ import Testing
     let first = LedgerTransaction(
         id: transaction.id,
         kind: .expense,
-        amount: Money(minorUnits: 1_000, currencyCode: "MXN"),
+        amount: try Money(minorUnits: 1_000, currencyCode: "MXN"),
         accountID: transaction.accountID,
         categoryID: transaction.categoryID,
         occurredAt: transaction.occurredAt
@@ -16,7 +16,7 @@ import Testing
     let later = LedgerTransaction(
         id: transaction.id,
         kind: .expense,
-        amount: Money(minorUnits: 2_500, currencyCode: "MXN"),
+        amount: try Money(minorUnits: 2_500, currencyCode: "MXN"),
         accountID: transaction.accountID,
         categoryID: transaction.categoryID,
         occurredAt: transaction.occurredAt
@@ -68,7 +68,7 @@ private func sharedFixture() throws -> (BudgetSpace, LedgerState, LedgerTransact
     let category = LedgerCategory(name: "Food", kind: .expense)
     let transaction = LedgerTransaction(
         kind: .expense,
-        amount: Money(minorUnits: 500, currencyCode: "MXN"),
+        amount: try Money(minorUnits: 500, currencyCode: "MXN"),
         accountID: account.id,
         categoryID: category.id,
         occurredAt: Date(timeIntervalSince1970: 1_704_067_200)
