@@ -81,7 +81,7 @@ public final class CoreDataLedgerStore {
 
     public func load(baseCurrencyCode: String) throws -> LedgerState {
         let space = try defaultSpace(baseCurrencyCode: baseCurrencyCode)
-        return try load(spaceID: space.id)
+        return try load(spaceID: requiredSpaceID(space))
     }
 
     public func load(spaceID: UUID) throws -> LedgerState {
