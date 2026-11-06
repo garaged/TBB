@@ -1,12 +1,17 @@
 #if canImport(SwiftUI) && canImport(CoreData)
 import Combine
 import Foundation
+#if canImport(CloudKit)
+import CloudKit
+#endif
 import TBBFoundation
 
 @MainActor
 final class LedgerViewModel: ObservableObject {
     @Published private(set) var state: LedgerState
     @Published private(set) var errorMessage: String? = nil
+    @Published private(set) var spaces: [StoredBudgetSpace] = []
+    @Published private(set) var activeSpace: StoredBudgetSpace? = nil
 
     private var store: CoreDataLedgerStore?
     private let budgetNotifications = BudgetNotificationCoordinator()
@@ -15,7 +20,10 @@ final class LedgerViewModel: ObservableObject {
         do {
             let persistentStore = try CoreDataLedgerStore()
             store = persistentStore
-            state = try persistentStore.load(baseCurrencyCode: "MXN")
+            let active = try persistentStore.defaultBudgetSpace(baseCurrencyCode: "MXN")
+            state = try persistentStore.load(spaceID: active.id)
+            activeSpace = active
+            spaces = try persistentStore.budgetSpaces(baseCurrencyCode: "MXN")
             seedCategoriesIfNeeded()
             budgetNotifications.refresh(state: state)
         } catch {
@@ -113,6 +121,43 @@ final class LedgerViewModel: ObservableObject {
         }
     }
 
+    func selectBudgetSpace(id: UUID) {
+        do {
+            guard let selected = spaces.first(where: { $0.id == id }) else { return }
+            state = try store?.load(spaceID: id) ?? state
+            activeSpace = selected
+            budgetNotifications.refresh(state: state)
+        } catch {
+            errorMessage = "TBB could not open that household budget."
+        }
+    }
+
+    #if canImport(CloudKit)
+    func createOrFetchShareForActiveSpace() async -> CloudKitShareSession? {
+        guard let store, let activeSpace else {
+            errorMessage = "TBB could not prepare household sharing."
+            return nil
+        }
+        do {
+            let session = try await store.createOrFetchShare(for: activeSpace.id)
+            try refreshSpaces()
+            return session
+        } catch {
+            errorMessage = "TBB could not start iCloud sharing. Check your iCloud account and try again."
+            return nil
+        }
+    }
+
+    func acceptShareInvitation(_ metadata: CKShare.Metadata) {
+        store?.accept(metadata)
+        do {
+            try refreshSpaces()
+        } catch {
+            errorMessage = "TBB received the household invite but could not refresh shared budgets yet."
+        }
+    }
+    #endif
+
     func balance(for account: LedgerAccount) -> Money {
         (try? state.balance(of: account.id)) ?? (try! Money(minorUnits: 0, currencyCode: account.currencyCode))
     }
@@ -134,6 +179,23 @@ final class LedgerViewModel: ObservableObject {
         }
     }
 
-    private func persist() throws { try store?.save(state) }
+    private func persist() throws {
+        if let activeSpace {
+            try store?.save(state, in: activeSpace.id)
+        } else {
+            try store?.save(state)
+        }
+        try refreshSpaces()
+    }
+
+    private func refreshSpaces() throws {
+        guard let store else { return }
+        spaces = try store.budgetSpaces(baseCurrencyCode: state.baseCurrencyCode)
+        if let activeSpace {
+            self.activeSpace = spaces.first(where: { $0.id == activeSpace.id }) ?? activeSpace
+        } else {
+            self.activeSpace = try store.defaultBudgetSpace(baseCurrencyCode: state.baseCurrencyCode)
+        }
+    }
 }
 #endif
