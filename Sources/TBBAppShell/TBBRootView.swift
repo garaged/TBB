@@ -52,40 +52,29 @@ public struct TBBRootView: View {
 
     private var overview: some View {
         NavigationStack {
-            VStack(alignment: .leading, spacing: 24) {
-                Text("Thy Budget Buddy")
-                    .font(.largeTitle.bold())
-                Text(PrivacyPresentation(mode: privacyMode).amount("$0.00"))
-                    .font(.system(size: 44, weight: .semibold, design: .rounded))
-                    .accessibilityLabel(PrivacyPresentation(mode: privacyMode).accessibilitySummary)
-                Text("Your first budget will appear here.")
-                    .foregroundStyle(.secondary)
-                Spacer()
-            }
-            .padding()
-            .navigationTitle("Overview")
-            .toolbar {
-                ToolbarItem(placement: .automatic) {
-                    Button {
-                        privacyMode.toggle()
-                    } label: {
-                        Image(systemName: privacyMode == .revealed ? "eye" : "eye.slash")
+            LedgerHomeView(privacyMode: privacyMode)
+                .toolbar {
+                    ToolbarItem(placement: .automatic) {
+                        Button {
+                            privacyMode.toggle()
+                        } label: {
+                            Image(systemName: privacyMode == .revealed ? "eye" : "eye.slash")
+                        }
+                        .accessibilityLabel(privacyMode == .revealed ? "Hide monetary amounts" : "Show monetary amounts")
+                        .accessibilityHint("Changes only this device's display.")
                     }
-                    .accessibilityLabel(privacyMode == .revealed ? "Hide monetary amounts" : "Show monetary amounts")
-                    .accessibilityHint("Changes only this device's display.")
-                }
-                ToolbarItem(placement: .automatic) {
-                    Button {
-                        showingSecurity = true
-                    } label: {
-                        Image(systemName: "lock")
+                    ToolbarItem(placement: .automatic) {
+                        Button {
+                            showingSecurity = true
+                        } label: {
+                            Image(systemName: "lock")
+                        }
+                        .accessibilityLabel("Security settings")
                     }
-                    .accessibilityLabel("Security settings")
                 }
-            }
-            .sheet(isPresented: $showingSecurity) {
-                SecuritySettingsView(controller: lockController)
-            }
+                .sheet(isPresented: $showingSecurity) {
+                    SecuritySettingsView(controller: lockController)
+                }
         }
     }
 }
