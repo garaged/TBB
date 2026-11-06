@@ -103,7 +103,6 @@ private struct AccountEntryView: View {
         NavigationStack {
             Form {
                 TextField("Account name", text: $name)
-                    .textInputAutocapitalization(.words)
                 Picker("Type", selection: $kind) {
                     Text("Cash").tag(AccountKind.cash)
                     Text("Checking").tag(AccountKind.checking)
