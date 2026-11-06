@@ -110,7 +110,6 @@ private struct AccountEntryView: View {
                     Text("Credit card").tag(AccountKind.creditCard)
                 }
                 TextField("Opening balance", text: $openingBalance)
-                    .keyboardType(.decimalPad)
                 Text("Currency: \(baseCurrencyCode)")
                     .foregroundStyle(.secondary)
             }

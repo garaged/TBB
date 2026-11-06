@@ -6,9 +6,9 @@ import TBBFoundation
 @MainActor
 final class LedgerViewModel: ObservableObject {
     @Published private(set) var state: LedgerState
-    @Published private(set) var errorMessage: String?
+    @Published private(set) var errorMessage: String? = nil
 
-    private let store: CoreDataLedgerStore?
+    private var store: CoreDataLedgerStore?
 
     init() {
         do {
