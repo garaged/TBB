@@ -381,7 +381,7 @@ public final class CoreDataLedgerStore {
     }
 
     private static func transientURL(named name: String) -> URL {
-        URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent("\\(UUID().uuidString)-\\(name)")
+        URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent("\(UUID().uuidString)-\(name)")
     }
 
     private static func makeModel() -> NSManagedObjectModel {
