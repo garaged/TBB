@@ -14,6 +14,7 @@
 
 - iPhone physical-device lock/unlock and Privacy Mode.
 - iPad layout/keyboard/Dynamic Type.
+- M2 account creation, expense, income, transfer, persistence, error, and Privacy Mode loop: `docs/manual-testing/m2-ledger.md`.
 - Watch quick-capture and masked glance behavior.
 - Two Apple Accounts sharing/accepting/revoking a household budget.
 - Offline edit then reconciliation.
