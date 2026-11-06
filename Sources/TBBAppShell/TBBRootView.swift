@@ -38,6 +38,14 @@ public struct TBBRootView: View {
                     .toolbar { globalToolbar }
             }
             .tabItem { Label("Budgets", systemImage: "target") }
+
+            #if canImport(CloudKit) && canImport(UIKit)
+            NavigationStack {
+                HouseholdHomeView(model: ledgerModel)
+                    .toolbar { globalToolbar }
+            }
+            .tabItem { Label("Household", systemImage: "person.2") }
+            #endif
         }
         .sheet(isPresented: $showingSecurity) { SecuritySettingsView(controller: lockController) }
     }
