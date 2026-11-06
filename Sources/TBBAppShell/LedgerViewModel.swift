@@ -32,19 +32,19 @@ final class LedgerViewModel: ObservableObject {
         }
     }
 
-    func record(kind: LedgerTransactionKind, minorUnits: Int64, accountID: UUID, categoryID: UUID?, destinationID: UUID?, note: String) {
+    func record(kind: LedgerTransactionKind, minorUnits: Int64, accountID: UUID, categoryID: UUID?, destinationID: UUID?, occurredAt: Date, note: String) {
         do {
             let amount = try Money(minorUnits: minorUnits, currencyCode: state.baseCurrencyCode)
             switch kind {
             case .expense:
                 guard let categoryID else { return }
-                try state.recordExpense(amount: amount, accountID: accountID, categoryID: categoryID, occurredAt: .now, note: note)
+                try state.recordExpense(amount: amount, accountID: accountID, categoryID: categoryID, occurredAt: occurredAt, note: note)
             case .income:
                 guard let categoryID else { return }
-                try state.recordIncome(amount: amount, accountID: accountID, categoryID: categoryID, occurredAt: .now, note: note)
+                try state.recordIncome(amount: amount, accountID: accountID, categoryID: categoryID, occurredAt: occurredAt, note: note)
             case .transfer:
                 guard let destinationID else { return }
-                try state.recordTransfer(amount: amount, fromAccountID: accountID, toAccountID: destinationID, occurredAt: .now, note: note)
+                try state.recordTransfer(amount: amount, fromAccountID: accountID, toAccountID: destinationID, occurredAt: occurredAt, note: note)
             }
             try persist()
         } catch {

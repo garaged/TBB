@@ -4,7 +4,7 @@ import TBBFoundation
 
 struct LedgerHomeView: View {
     let privacyMode: PrivacyMode
-    @StateObject private var model = LedgerViewModel()
+    @ObservedObject var model: LedgerViewModel
     @State private var showingAccountEntry = false
     @State private var showingTransactionEntry = false
 
@@ -39,6 +39,9 @@ struct LedgerHomeView: View {
                             VStack(alignment: .leading) {
                                 Text(model.categoryName(for: transaction.categoryID))
                                 if !transaction.note.isEmpty { Text(transaction.note).font(.footnote).foregroundStyle(.secondary) }
+                                Text(transaction.occurredAt, format: .dateTime.year().month(.abbreviated).day().hour().minute())
+                                    .font(.footnote)
+                                    .foregroundStyle(.secondary)
                             }
                             Spacer()
                             Text(display(transaction.amount)).monospacedDigit()
@@ -56,8 +59,16 @@ struct LedgerHomeView: View {
             }
         }
         .sheet(isPresented: $showingTransactionEntry) {
-            TransactionEntryView(state: model.state) { kind, amount, account, category, destination, note in
-                model.record(kind: kind, minorUnits: CurrencyFormatter.minorUnits(from: amount), accountID: account, categoryID: category, destinationID: destination, note: note)
+            TransactionEntryView(state: model.state) { kind, amount, account, category, destination, occurredAt, note in
+                model.record(
+                    kind: kind,
+                    minorUnits: CurrencyFormatter.minorUnits(from: amount),
+                    accountID: account,
+                    categoryID: category,
+                    destinationID: destination,
+                    occurredAt: occurredAt,
+                    note: note
+                )
             }
         }
         .alert("Could not update budget", isPresented: Binding(get: { model.errorMessage != nil }, set: { if !$0 { model.dismissError() } })) {
@@ -99,13 +110,14 @@ private struct AccountEntryView: View {
 
 private struct TransactionEntryView: View {
     let state: LedgerState
-    let onSave: (LedgerTransactionKind, String, UUID, UUID?, UUID?, String) -> Void
+    let onSave: (LedgerTransactionKind, String, UUID, UUID?, UUID?, Date, String) -> Void
     @Environment(\.dismiss) private var dismiss
     @State private var kind: LedgerTransactionKind = .expense
     @State private var amount = ""
     @State private var accountID: UUID?
     @State private var categoryID: UUID?
     @State private var destinationID: UUID?
+    @State private var occurredAt = Date()
     @State private var note = ""
 
     var body: some View {
@@ -113,6 +125,7 @@ private struct TransactionEntryView: View {
             Form {
                 Picker("Type", selection: $kind) { Text("Expense").tag(LedgerTransactionKind.expense); Text("Income").tag(LedgerTransactionKind.income); Text("Transfer").tag(LedgerTransactionKind.transfer) }
                 TextField("Amount", text: $amount)
+                DatePicker("Date and time", selection: $occurredAt, displayedComponents: [.date, .hourAndMinute])
                 Picker("Account", selection: $accountID) { Text("Select account").tag(UUID?.none); ForEach(state.accounts) { Text($0.name).tag(Optional($0.id)) } }
                 if kind == .transfer {
                     Picker("To account", selection: $destinationID) { Text("Select destination").tag(UUID?.none); ForEach(state.accounts) { Text($0.name).tag(Optional($0.id)) } }
@@ -122,7 +135,7 @@ private struct TransactionEntryView: View {
                 TextField("Note (optional)", text: $note)
             }.navigationTitle("New transaction").toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
-                ToolbarItem(placement: .confirmationAction) { Button("Save") { if let accountID { onSave(kind, amount, accountID, categoryID, destinationID, note); dismiss() } }.disabled(accountID == nil || CurrencyFormatter.minorUnits(from: amount) <= 0 || (kind == .transfer ? destinationID == nil : categoryID == nil)) }
+                ToolbarItem(placement: .confirmationAction) { Button("Save") { if let accountID { onSave(kind, amount, accountID, categoryID, destinationID, occurredAt, note); dismiss() } }.disabled(accountID == nil || CurrencyFormatter.minorUnits(from: amount) <= 0 || (kind == .transfer ? destinationID == nil : categoryID == nil)) }
             }
         }
     }

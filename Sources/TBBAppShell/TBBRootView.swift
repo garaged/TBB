@@ -5,6 +5,7 @@ import TBBFoundation
 public struct TBBRootView: View {
     @Environment(\.scenePhase) private var scenePhase
     @StateObject private var lockController = AppLockController()
+    @StateObject private var ledgerModel = LedgerViewModel()
     @State private var privacyMode: PrivacyMode = .revealed
     @State private var showingSecurity = false
     @State private var password = ""
@@ -21,13 +22,16 @@ public struct TBBRootView: View {
     private var applicationTabs: some View {
         TabView {
             NavigationStack {
-                LedgerHomeView(privacyMode: privacyMode)
+                LedgerHomeView(privacyMode: privacyMode, model: ledgerModel)
                     .toolbar { globalToolbar }
             }
             .tabItem { Label("Overview", systemImage: "list.bullet") }
 
-            NavigationStack { DashboardHomeView(privacyMode: privacyMode) }
-                .tabItem { Label("Dashboard", systemImage: "chart.bar") }
+            NavigationStack {
+                DashboardHomeView(privacyMode: privacyMode, model: ledgerModel)
+                    .toolbar { globalToolbar }
+            }
+            .tabItem { Label("Dashboard", systemImage: "chart.bar") }
         }
         .sheet(isPresented: $showingSecurity) { SecuritySettingsView(controller: lockController) }
     }
@@ -80,4 +84,3 @@ private struct SecuritySettingsView: View {
         }
     }
 }
-#endif

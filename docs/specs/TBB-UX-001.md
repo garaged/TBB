@@ -12,6 +12,8 @@ Let a person move confidently through financial time ranges without creating con
 - Given transfers inside a dashboard range, when cash flow cards are calculated, then transfers do not appear as income or expenses.
 - Given Privacy Mode is on, when dashboard totals or chart values render, then all money amounts are masked while labels and navigation remain usable.
 - Given a configured budget-space time zone, when a range is calculated, then it uses that time zone and does not silently shift with the viewing device.
+- Given any selected range, when it is rendered, then its title identifies the full week, month, quarter, or year represented and changes with period navigation.
+- Given a person opens Dashboard, when they need to conceal amounts or adjust local protection, then the always-available Privacy Mode and Security controls are available there as on Overview.
 
 ## M3 scope boundary
 

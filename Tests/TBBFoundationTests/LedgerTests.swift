@@ -17,6 +17,21 @@ import Testing
     #expect(try ledger.balance(of: checking.id) == Money(minorUnits: 11_250, currencyCode: "MXN"))
 }
 
+@Test func ledgerPreservesUserSelectedOccurrenceDateAndTime() throws {
+    var ledger = try LedgerState(baseCurrencyCode: "MXN")
+    let cash = try LedgerAccount(name: "Cash", kind: .cash, currencyCode: "MXN")
+    let food = LedgerCategory(name: "Food", kind: .expense)
+    let occurredAt = Date(timeIntervalSince1970: 1_704_112_496) // 2024-01-01T12:34:56Z
+    try ledger.addAccount(cash)
+    try ledger.addCategory(food)
+
+    try ledger.recordExpense(amount: Money(minorUnits: 1_500, currencyCode: "MXN"), accountID: cash.id, categoryID: food.id, occurredAt: occurredAt)
+
+    #expect(ledger.transactions.first?.occurredAt == occurredAt)
+    let january = DashboardNavigator(period: .month, anchor: occurredAt, timeZone: TimeZone(secondsFromGMT: 0)!).range
+    #expect(LedgerInsights.summarize(state: ledger, range: january).expenseMinorUnits == 1_500)
+}
+
 @Test func transfersPreserveTotalAcrossAccounts() throws {
     var ledger = try LedgerState(baseCurrencyCode: "USD")
     let cash = try LedgerAccount(name: "Cash", kind: .cash, currencyCode: "USD", openingBalanceMinorUnits: 10_000)

@@ -13,6 +13,20 @@ import Testing
     #expect(!navigator.range.contains(Date(timeIntervalSince1970: 1_706_745_600)))
 }
 
+@Test func dashboardNavigatorUsesTheSameAnchorWhenChangingGranularity() {
+    let zone = TimeZone(secondsFromGMT: 0)!
+    let anchor = Date(timeIntervalSince1970: 1_718_409_600) // 2024-06-15T00:00:00Z
+    let navigator = DashboardNavigator(period: .month, anchor: anchor, timeZone: zone)
+
+    let week = navigator.changingPeriod(to: .week)
+    let quarter = navigator.changingPeriod(to: .quarter)
+
+    #expect(week.range.contains(anchor))
+    #expect(quarter.range.contains(anchor))
+    #expect(week.range != navigator.range)
+    #expect(quarter.range != navigator.range)
+}
+
 @Test func dashboardSummaryExcludesTransfersAndOtherPeriods() throws {
     var state = try LedgerState(baseCurrencyCode: "MXN")
     let account = try LedgerAccount(name: "Wallet", kind: .cash, currencyCode: "MXN")
