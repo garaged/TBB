@@ -13,69 +13,45 @@ public struct TBBRootView: View {
 
     public var body: some View {
         Group {
-            if lockController.state == .locked {
-                lockedView
-            } else {
-                overview
-            }
+            if lockController.state == .locked { lockedView } else { applicationTabs }
         }
-        .onChange(of: scenePhase) { _, phase in
-            if phase == .background {
-                lockController.lockForBackground()
+        .onChange(of: scenePhase) { _, phase in if phase == .background { lockController.lockForBackground() } }
+    }
+
+    private var applicationTabs: some View {
+        TabView {
+            NavigationStack {
+                LedgerHomeView(privacyMode: privacyMode)
+                    .toolbar { globalToolbar }
             }
+            .tabItem { Label("Overview", systemImage: "list.bullet") }
+
+            NavigationStack { DashboardHomeView(privacyMode: privacyMode) }
+                .tabItem { Label("Dashboard", systemImage: "chart.bar") }
+        }
+        .sheet(isPresented: $showingSecurity) { SecuritySettingsView(controller: lockController) }
+    }
+
+    @ToolbarContentBuilder
+    private var globalToolbar: some ToolbarContent {
+        ToolbarItem(placement: .automatic) {
+            Button { privacyMode.toggle() } label: { Image(systemName: privacyMode == .revealed ? "eye" : "eye.slash") }
+                .accessibilityLabel(privacyMode == .revealed ? "Hide monetary amounts" : "Show monetary amounts")
+        }
+        ToolbarItem(placement: .automatic) {
+            Button { showingSecurity = true } label: { Image(systemName: "lock") }
+                .accessibilityLabel("Security settings")
         }
     }
 
     private var lockedView: some View {
         VStack(spacing: 20) {
-            ContentUnavailableView(
-                "TBB is locked",
-                systemImage: "lock.fill",
-                description: Text("Authenticate to view your financial information.")
-            )
-            Button("Unlock with Face ID or device passcode") {
-                Task { await lockController.unlockWithDeviceAuthentication() }
-            }
-            SecureField("Local password", text: $password)
-                .textContentType(.password)
-                .padding(.horizontal)
-            Button("Unlock") {
-                lockController.unlockWithPassword(password)
-                password = ""
-            }
-            if let message = lockController.errorMessage {
-                Text(message).foregroundStyle(.red).font(.footnote)
-            }
-        }
-        .padding()
-    }
-
-    private var overview: some View {
-        NavigationStack {
-            LedgerHomeView(privacyMode: privacyMode)
-                .toolbar {
-                    ToolbarItem(placement: .automatic) {
-                        Button {
-                            privacyMode.toggle()
-                        } label: {
-                            Image(systemName: privacyMode == .revealed ? "eye" : "eye.slash")
-                        }
-                        .accessibilityLabel(privacyMode == .revealed ? "Hide monetary amounts" : "Show monetary amounts")
-                        .accessibilityHint("Changes only this device's display.")
-                    }
-                    ToolbarItem(placement: .automatic) {
-                        Button {
-                            showingSecurity = true
-                        } label: {
-                            Image(systemName: "lock")
-                        }
-                        .accessibilityLabel("Security settings")
-                    }
-                }
-                .sheet(isPresented: $showingSecurity) {
-                    SecuritySettingsView(controller: lockController)
-                }
-        }
+            ContentUnavailableView("TBB is locked", systemImage: "lock.fill", description: Text("Authenticate to view your financial information."))
+            Button("Unlock with Face ID or device passcode") { Task { await lockController.unlockWithDeviceAuthentication() } }
+            SecureField("Local password", text: $password).textContentType(.password).padding(.horizontal)
+            Button("Unlock") { lockController.unlockWithPassword(password); password = "" }
+            if let message = lockController.errorMessage { Text(message).foregroundStyle(.red).font(.footnote) }
+        }.padding()
     }
 }
 
@@ -91,38 +67,16 @@ private struct SecuritySettingsView: View {
                 Section("Local lock") {
                     if controller.isPasswordConfigured {
                         Text("A local password is configured for this device.")
-                        Button("Remove local password", role: .destructive) {
-                            controller.removePassword()
-                        }
+                        Button("Remove local password", role: .destructive) { controller.removePassword() }
                     } else {
-                        SecureField("New password", text: $password)
-                            .textContentType(.newPassword)
-                        SecureField("Confirm password", text: $confirmation)
-                            .textContentType(.newPassword)
-                        Button("Enable local lock") {
-                            controller.setPassword(password, confirmation: confirmation)
-                            if controller.isPasswordConfigured {
-                                password = ""
-                                confirmation = ""
-                            }
-                        }
+                        SecureField("New password", text: $password).textContentType(.newPassword)
+                        SecureField("Confirm password", text: $confirmation).textContentType(.newPassword)
+                        Button("Enable local lock") { controller.setPassword(password, confirmation: confirmation); if controller.isPasswordConfigured { password = ""; confirmation = "" } }
                     }
-                    Text("Face ID, Touch ID, or device passcode can unlock TBB after a local password is configured.")
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
+                    Text("Face ID, Touch ID, or device passcode can unlock TBB after a local password is configured.").font(.footnote).foregroundStyle(.secondary)
                 }
-                if let message = controller.errorMessage {
-                    Section {
-                        Text(message).foregroundStyle(.red)
-                    }
-                }
-            }
-            .navigationTitle("Security")
-            .toolbar {
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Done") { dismiss() }
-                }
-            }
+                if let message = controller.errorMessage { Section { Text(message).foregroundStyle(.red) } }
+            }.navigationTitle("Security").toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { dismiss() } } }
         }
     }
 }
