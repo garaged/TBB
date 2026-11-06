@@ -32,6 +32,12 @@ public struct TBBRootView: View {
                     .toolbar { globalToolbar }
             }
             .tabItem { Label("Dashboard", systemImage: "chart.bar") }
+
+            NavigationStack {
+                BudgetHomeView(privacyMode: privacyMode, model: ledgerModel)
+                    .toolbar { globalToolbar }
+            }
+            .tabItem { Label("Budgets", systemImage: "target") }
         }
         .sheet(isPresented: $showingSecurity) { SecuritySettingsView(controller: lockController) }
     }
