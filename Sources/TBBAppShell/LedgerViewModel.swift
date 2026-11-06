@@ -52,6 +52,42 @@ final class LedgerViewModel: ObservableObject {
         }
     }
 
+    func update(
+        transactionID: UUID,
+        kind: LedgerTransactionKind,
+        minorUnits: Int64,
+        accountID: UUID,
+        categoryID: UUID?,
+        destinationID: UUID?,
+        occurredAt: Date,
+        note: String
+    ) {
+        do {
+            try state.updateTransaction(
+                id: transactionID,
+                kind: kind,
+                amount: Money(minorUnits: minorUnits, currencyCode: state.baseCurrencyCode),
+                accountID: accountID,
+                categoryID: categoryID,
+                counterpartyAccountID: destinationID,
+                occurredAt: occurredAt,
+                note: note
+            )
+            try persist()
+        } catch {
+            errorMessage = "TBB could not update that transaction. Check the account, category, and amount."
+        }
+    }
+
+    func delete(transactionID: UUID) {
+        do {
+            try state.deleteTransaction(id: transactionID)
+            try persist()
+        } catch {
+            errorMessage = "TBB could not delete that transaction."
+        }
+    }
+
     func balance(for account: LedgerAccount) -> Money {
         (try? state.balance(of: account.id)) ?? (try! Money(minorUnits: 0, currencyCode: account.currencyCode))
     }

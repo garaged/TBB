@@ -10,7 +10,7 @@ Swift project, modular boundaries, design system, accessible app shell, local lo
 
 ## M2 — Ledger
 
-Accounts, categories, transactions, transfers, deterministic balances, fast capture, history/search.
+Accounts, categories, transactions, transfers, deterministic balances, fast capture, history/search, and transaction correction.
 
 ## M3 — Dashboards
 

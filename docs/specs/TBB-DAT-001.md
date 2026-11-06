@@ -13,6 +13,9 @@ Record the financial facts a person enters with exact arithmetic, understandable
 - Given an invalid currency, zero/negative amount, unknown account/category, wrong category kind, or self-transfer, when a mutation is requested, then no transaction is added and TBB returns a recoverable validation error.
 - Given an account or transaction with a currency, when the device locale changes, then stored amount and ISO currency stay unchanged.
 - Given a person chooses a date and time while recording a transaction, when it is saved, then the exact selected occurrence timestamp is retained and determines its dashboard period.
+- Given a person edits a transaction, when valid replacement details are saved, then its stable identity is retained and balances and dashboard periods derive only from the replacement.
+- Given a transaction edit is invalid, when validation fails, then the original transaction and all derived balances remain unchanged.
+- Given a person deletes a transaction and confirms the destructive action, then it is removed and affected balances and dashboard periods are recalculated.
 
 ## M2 scope boundary
 
