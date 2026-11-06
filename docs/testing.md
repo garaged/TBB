@@ -19,6 +19,7 @@ Every manual acceptance begins with the exact PR branch and commit preflight in 
 - iPhone physical-device lock/unlock and Privacy Mode.
 - iPad layout/keyboard/Dynamic Type.
 - M2 account creation, expense, income, transfer, persistence, error, and Privacy Mode loop: `docs/manual-testing/m2-ledger.md`.
+- M3 period navigation, dashboard calculations, Privacy Mode, and iPad accessibility: `docs/manual-testing/m3-dashboards.md`.
 - Watch quick-capture and masked glance behavior.
 - Two Apple Accounts sharing/accepting/revoking a household budget.
 - Offline edit then reconciliation.

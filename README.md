@@ -20,9 +20,12 @@ The foundation is a strict-concurrency Swift package plus a reproducible univers
 swift test
 make ci
 brew install xcodegen
+bash scripts/generate-app-icon.sh
 xcodegen generate
 open TBB.xcodeproj
 ```
+
+The icon is authored as a version-controlled vector and rendered locally into the app-catalog PNG; rerun the icon command after changing `IconSource.svg`.
 
 The generated app target supports iPhone and iPad. The watchOS companion target is added with the Watch milestone, after the ledger and privacy-safe glance contracts exist.
 

@@ -7,6 +7,7 @@ public enum LedgerError: Error, Equatable, Sendable {
     case duplicateCategoryName
     case unknownAccount
     case unknownCategory
+    case unknownTransaction
     case wrongCategoryKind
     case accountCurrencyMismatch
     case sameTransferAccount
@@ -137,30 +138,71 @@ public struct LedgerState: Codable, Equatable, Sendable {
     }
 
     public mutating func recordExpense(amount: Money, accountID: UUID, categoryID: UUID, occurredAt: Date, note: String = "") throws {
-        try validatePositive(amount)
-        let account = try account(id: accountID)
-        guard account.currencyCode == amount.currencyCode else { throw LedgerError.accountCurrencyMismatch }
-        guard try category(id: categoryID).kind == .expense else { throw LedgerError.wrongCategoryKind }
-        transactions.append(.init(kind: .expense, amount: amount, accountID: accountID, categoryID: categoryID, occurredAt: occurredAt, note: note))
+        transactions.append(try validatedTransaction(
+            id: UUID(),
+            kind: .expense,
+            amount: amount,
+            accountID: accountID,
+            categoryID: categoryID,
+            counterpartyAccountID: nil,
+            occurredAt: occurredAt,
+            note: note
+        ))
     }
 
     public mutating func recordIncome(amount: Money, accountID: UUID, categoryID: UUID, occurredAt: Date, note: String = "") throws {
-        try validatePositive(amount)
-        let account = try account(id: accountID)
-        guard account.currencyCode == amount.currencyCode else { throw LedgerError.accountCurrencyMismatch }
-        guard try category(id: categoryID).kind == .income else { throw LedgerError.wrongCategoryKind }
-        transactions.append(.init(kind: .income, amount: amount, accountID: accountID, categoryID: categoryID, occurredAt: occurredAt, note: note))
+        transactions.append(try validatedTransaction(
+            id: UUID(),
+            kind: .income,
+            amount: amount,
+            accountID: accountID,
+            categoryID: categoryID,
+            counterpartyAccountID: nil,
+            occurredAt: occurredAt,
+            note: note
+        ))
     }
 
     public mutating func recordTransfer(amount: Money, fromAccountID: UUID, toAccountID: UUID, occurredAt: Date, note: String = "") throws {
-        try validatePositive(amount)
-        guard fromAccountID != toAccountID else { throw LedgerError.sameTransferAccount }
-        let source = try account(id: fromAccountID)
-        let destination = try account(id: toAccountID)
-        guard source.currencyCode == amount.currencyCode, destination.currencyCode == amount.currencyCode else {
-            throw LedgerError.accountCurrencyMismatch
-        }
-        transactions.append(.init(kind: .transfer, amount: amount, accountID: fromAccountID, counterpartyAccountID: toAccountID, occurredAt: occurredAt, note: note))
+        transactions.append(try validatedTransaction(
+            id: UUID(),
+            kind: .transfer,
+            amount: amount,
+            accountID: fromAccountID,
+            categoryID: nil,
+            counterpartyAccountID: toAccountID,
+            occurredAt: occurredAt,
+            note: note
+        ))
+    }
+
+    public mutating func updateTransaction(
+        id: UUID,
+        kind: LedgerTransactionKind,
+        amount: Money,
+        accountID: UUID,
+        categoryID: UUID?,
+        counterpartyAccountID: UUID?,
+        occurredAt: Date,
+        note: String
+    ) throws {
+        guard let index = transactions.firstIndex(where: { $0.id == id }) else { throw LedgerError.unknownTransaction }
+        let replacement = try validatedTransaction(
+            id: id,
+            kind: kind,
+            amount: amount,
+            accountID: accountID,
+            categoryID: categoryID,
+            counterpartyAccountID: counterpartyAccountID,
+            occurredAt: occurredAt,
+            note: note
+        )
+        transactions[index] = replacement
+    }
+
+    public mutating func deleteTransaction(id: UUID) throws {
+        guard let index = transactions.firstIndex(where: { $0.id == id }) else { throw LedgerError.unknownTransaction }
+        transactions.remove(at: index)
     }
 
     public func balance(of accountID: UUID) throws -> Money {
@@ -180,6 +222,38 @@ public struct LedgerState: Codable, Equatable, Sendable {
             }
         }
         return try Money(minorUnits: account.openingBalanceMinorUnits + movements, currencyCode: account.currencyCode)
+    }
+
+    private func validatedTransaction(
+        id: UUID,
+        kind: LedgerTransactionKind,
+        amount: Money,
+        accountID: UUID,
+        categoryID: UUID?,
+        counterpartyAccountID: UUID?,
+        occurredAt: Date,
+        note: String
+    ) throws -> LedgerTransaction {
+        try validatePositive(amount)
+        let source = try account(id: accountID)
+        guard source.currencyCode == amount.currencyCode else { throw LedgerError.accountCurrencyMismatch }
+
+        switch kind {
+        case .expense:
+            guard let categoryID else { throw LedgerError.unknownCategory }
+            guard try category(id: categoryID).kind == .expense else { throw LedgerError.wrongCategoryKind }
+            return .init(id: id, kind: kind, amount: amount, accountID: accountID, categoryID: categoryID, occurredAt: occurredAt, note: note)
+        case .income:
+            guard let categoryID else { throw LedgerError.unknownCategory }
+            guard try category(id: categoryID).kind == .income else { throw LedgerError.wrongCategoryKind }
+            return .init(id: id, kind: kind, amount: amount, accountID: accountID, categoryID: categoryID, occurredAt: occurredAt, note: note)
+        case .transfer:
+            guard let counterpartyAccountID else { throw LedgerError.unknownAccount }
+            guard accountID != counterpartyAccountID else { throw LedgerError.sameTransferAccount }
+            let destination = try account(id: counterpartyAccountID)
+            guard destination.currencyCode == amount.currencyCode else { throw LedgerError.accountCurrencyMismatch }
+            return .init(id: id, kind: kind, amount: amount, accountID: accountID, counterpartyAccountID: counterpartyAccountID, occurredAt: occurredAt, note: note)
+        }
     }
 
     private func account(id: UUID) throws -> LedgerAccount {

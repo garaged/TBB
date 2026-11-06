@@ -4,9 +4,11 @@ import TBBFoundation
 
 struct LedgerHomeView: View {
     let privacyMode: PrivacyMode
-    @StateObject private var model = LedgerViewModel()
+    @ObservedObject var model: LedgerViewModel
     @State private var showingAccountEntry = false
     @State private var showingTransactionEntry = false
+    @State private var editingTransaction: LedgerTransaction?
+    @State private var transactionPendingDeletion: LedgerTransaction?
 
     var body: some View {
         List {
@@ -35,13 +37,19 @@ struct LedgerHomeView: View {
                     Text("Record your first expense, income, or transfer.").foregroundStyle(.secondary)
                 } else {
                     ForEach(model.state.transactions.sorted(by: { $0.occurredAt > $1.occurredAt })) { transaction in
-                        HStack {
-                            VStack(alignment: .leading) {
-                                Text(model.categoryName(for: transaction.categoryID))
-                                if !transaction.note.isEmpty { Text(transaction.note).font(.footnote).foregroundStyle(.secondary) }
-                            }
-                            Spacer()
-                            Text(display(transaction.amount)).monospacedDigit()
+                        Button { editingTransaction = transaction } label: {
+                            transactionRow(transaction)
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityHint("Opens transaction editing")
+                        .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                            Button("Edit") { editingTransaction = transaction }
+                                .tint(.accentColor)
+                            Button("Delete", role: .destructive) { transactionPendingDeletion = transaction }
+                        }
+                        .contextMenu {
+                            Button("Edit transaction") { editingTransaction = transaction }
+                            Button("Delete transaction", role: .destructive) { transactionPendingDeletion = transaction }
                         }
                     }
                 }
@@ -56,20 +64,77 @@ struct LedgerHomeView: View {
             }
         }
         .sheet(isPresented: $showingTransactionEntry) {
-            TransactionEntryView(state: model.state) { kind, amount, account, category, destination, note in
-                model.record(kind: kind, minorUnits: CurrencyFormatter.minorUnits(from: amount), accountID: account, categoryID: category, destinationID: destination, note: note)
+            TransactionEntryView(state: model.state, privacyMode: privacyMode) { kind, amount, account, category, destination, occurredAt, note in
+                model.record(
+                    kind: kind,
+                    minorUnits: CurrencyFormatter.minorUnits(from: amount),
+                    accountID: account,
+                    categoryID: category,
+                    destinationID: destination,
+                    occurredAt: occurredAt,
+                    note: note
+                )
             }
+        }
+        .sheet(item: $editingTransaction) { transaction in
+            TransactionEntryView(state: model.state, transaction: transaction, privacyMode: privacyMode) { kind, amount, account, category, destination, occurredAt, note in
+                model.update(
+                    transactionID: transaction.id,
+                    kind: kind,
+                    minorUnits: CurrencyFormatter.minorUnits(from: amount),
+                    accountID: account,
+                    categoryID: category,
+                    destinationID: destination,
+                    occurredAt: occurredAt,
+                    note: note
+                )
+            }
+        }
+        .alert("Delete transaction?", isPresented: Binding(
+            get: { transactionPendingDeletion != nil },
+            set: { if !$0 { transactionPendingDeletion = nil } }
+        )) {
+            Button("Delete", role: .destructive) {
+                if let transactionPendingDeletion {
+                    model.delete(transactionID: transactionPendingDeletion.id)
+                }
+                transactionPendingDeletion = nil
+            }
+            Button("Cancel", role: .cancel) { transactionPendingDeletion = nil }
+        } message: {
+            Text("This permanently removes the transaction and recalculates affected balances and dashboard periods.")
         }
         .alert("Could not update budget", isPresented: Binding(get: { model.errorMessage != nil }, set: { if !$0 { model.dismissError() } })) {
             Button("OK", role: .cancel) { model.dismissError() }
         } message: { Text(model.errorMessage ?? "") }
     }
 
+    private func transactionRow(_ transaction: LedgerTransaction) -> some View {
+        HStack {
+            VStack(alignment: .leading) {
+                Text(model.categoryName(for: transaction.categoryID))
+                if !transaction.note.isEmpty { Text(transaction.note).font(.footnote).foregroundStyle(.secondary) }
+                Text(transaction.occurredAt, format: .dateTime.year().month(.abbreviated).day().hour().minute())
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+            }
+            Spacer()
+            Text(display(transaction.amount)).monospacedDigit()
+            Image(systemName: "chevron.right")
+                .font(.footnote)
+                .foregroundStyle(.tertiary)
+        }
+    }
+
     private var totalBalanceText: String {
         let total = model.state.accounts.reduce(Int64(0)) { $0 + model.balance(for: $1).minorUnits }
         return display(try! Money(minorUnits: total, currencyCode: model.state.baseCurrencyCode))
     }
-    private func display(_ money: Money) -> String { privacyMode.displayAmount(CurrencyFormatter.string(minorUnits: money.minorUnits, currencyCode: money.currencyCode)) }
+
+    private func display(_ money: Money) -> String {
+        privacyMode.displayAmount(CurrencyFormatter.string(minorUnits: money.minorUnits, currencyCode: money.currencyCode))
+    }
+
     private func icon(for kind: AccountKind) -> String {
         switch kind { case .cash: "banknote"; case .checking: "building.columns"; case .savings: "archivebox"; case .creditCard: "creditcard" }
     }
@@ -82,6 +147,7 @@ private struct AccountEntryView: View {
     @State private var name = ""
     @State private var kind: AccountKind = .checking
     @State private var openingBalance = ""
+
     var body: some View {
         NavigationStack {
             Form {
@@ -99,20 +165,48 @@ private struct AccountEntryView: View {
 
 private struct TransactionEntryView: View {
     let state: LedgerState
-    let onSave: (LedgerTransactionKind, String, UUID, UUID?, UUID?, String) -> Void
+    let transactionID: UUID?
+    let privacyMode: PrivacyMode
+    let onSave: (LedgerTransactionKind, String, UUID, UUID?, UUID?, Date, String) -> Void
     @Environment(\.dismiss) private var dismiss
-    @State private var kind: LedgerTransactionKind = .expense
-    @State private var amount = ""
+    @State private var kind: LedgerTransactionKind
+    @State private var amount: String
     @State private var accountID: UUID?
     @State private var categoryID: UUID?
     @State private var destinationID: UUID?
-    @State private var note = ""
+    @State private var occurredAt: Date
+    @State private var note: String
+
+    init(
+        state: LedgerState,
+        transaction: LedgerTransaction? = nil,
+        privacyMode: PrivacyMode,
+        onSave: @escaping (LedgerTransactionKind, String, UUID, UUID?, UUID?, Date, String) -> Void
+    ) {
+        self.state = state
+        transactionID = transaction?.id
+        self.privacyMode = privacyMode
+        self.onSave = onSave
+        _kind = State(initialValue: transaction?.kind ?? .expense)
+        _amount = State(initialValue: transaction.map { CurrencyFormatter.inputString(minorUnits: $0.amount.minorUnits) } ?? "")
+        _accountID = State(initialValue: transaction?.accountID)
+        _categoryID = State(initialValue: transaction?.categoryID)
+        _destinationID = State(initialValue: transaction?.counterpartyAccountID)
+        _occurredAt = State(initialValue: transaction?.occurredAt ?? Date())
+        _note = State(initialValue: transaction?.note ?? "")
+    }
 
     var body: some View {
         NavigationStack {
             Form {
                 Picker("Type", selection: $kind) { Text("Expense").tag(LedgerTransactionKind.expense); Text("Income").tag(LedgerTransactionKind.income); Text("Transfer").tag(LedgerTransactionKind.transfer) }
-                TextField("Amount", text: $amount)
+                if transactionID != nil && privacyMode == .concealed {
+                    SecureField("Amount", text: $amount)
+                        .accessibilityLabel("Amount hidden")
+                } else {
+                    TextField("Amount", text: $amount)
+                }
+                DatePicker("Date and time", selection: $occurredAt, displayedComponents: [.date, .hourAndMinute])
                 Picker("Account", selection: $accountID) { Text("Select account").tag(UUID?.none); ForEach(state.accounts) { Text($0.name).tag(Optional($0.id)) } }
                 if kind == .transfer {
                     Picker("To account", selection: $destinationID) { Text("Select destination").tag(UUID?.none); ForEach(state.accounts) { Text($0.name).tag(Optional($0.id)) } }
@@ -120,9 +214,17 @@ private struct TransactionEntryView: View {
                     Picker("Category", selection: $categoryID) { Text("Select category").tag(UUID?.none); ForEach(state.categories.filter { $0.kind == (kind == .expense ? .expense : .income) }) { Text($0.name).tag(Optional($0.id)) } }
                 }
                 TextField("Note (optional)", text: $note)
-            }.navigationTitle("New transaction").toolbar {
+            }.navigationTitle(transactionID == nil ? "New transaction" : "Edit transaction").toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
-                ToolbarItem(placement: .confirmationAction) { Button("Save") { if let accountID { onSave(kind, amount, accountID, categoryID, destinationID, note); dismiss() } }.disabled(accountID == nil || CurrencyFormatter.minorUnits(from: amount) <= 0 || (kind == .transfer ? destinationID == nil : categoryID == nil)) }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button(transactionID == nil ? "Save" : "Update") {
+                        if let accountID {
+                            onSave(kind, amount, accountID, categoryID, destinationID, occurredAt, note)
+                            dismiss()
+                        }
+                    }
+                    .disabled(accountID == nil || CurrencyFormatter.minorUnits(from: amount) <= 0 || (kind == .transfer ? destinationID == nil : categoryID == nil))
+                }
             }
         }
     }
@@ -133,6 +235,11 @@ enum CurrencyFormatter {
         let formatter = NumberFormatter(); formatter.numberStyle = .currency; formatter.currencyCode = currencyCode
         return formatter.string(from: NSNumber(value: Double(minorUnits) / 100)) ?? "\(minorUnits) \(currencyCode)"
     }
+
+    static func inputString(minorUnits: Int64) -> String {
+        NSDecimalNumber(decimal: Decimal(minorUnits) / 100).stringValue
+    }
+
     static func minorUnits(from text: String) -> Int64 {
         guard let decimal = Decimal(string: text, locale: .current) else { return 0 }
         return NSDecimalNumber(decimal: decimal * 100).rounding(accordingToBehavior: nil).int64Value
