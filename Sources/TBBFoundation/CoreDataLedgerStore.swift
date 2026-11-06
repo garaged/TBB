@@ -347,13 +347,13 @@ public final class CoreDataLedgerStore {
     private static func makeLocalContainer(model: NSManagedObjectModel, inMemory: Bool) -> NSPersistentContainer {
         let container = NSPersistentContainer(name: "TBBLedger", managedObjectModel: model)
         let legacy = description(
-            url: inMemory ? nil : persistentURL(named: "TBBLedger.sqlite"),
+            url: inMemory ? transientURL(named: "TBBLedger.sqlite") : persistentURL(named: "TBBLedger.sqlite"),
             configuration: "Legacy",
             options: nil,
             inMemory: inMemory
         )
         let privateStore = description(
-            url: inMemory ? nil : persistentURL(named: "TBBHousehold-private.sqlite"),
+            url: inMemory ? transientURL(named: "TBBHousehold-private.sqlite") : persistentURL(named: "TBBHousehold-private.sqlite"),
             configuration: "CloudPrivate",
             options: nil,
             inMemory: inMemory
@@ -370,17 +370,18 @@ public final class CoreDataLedgerStore {
     ) -> NSPersistentStoreDescription {
         let description = NSPersistentStoreDescription()
         description.configuration = configuration
-        if inMemory {
-            description.type = NSInMemoryStoreType
-        } else {
-            description.url = url
-        }
+        if inMemory { description.type = NSInMemoryStoreType }
+        description.url = url
         description.cloudKitContainerOptions = options
         return description
     }
 
     private static func persistentURL(named name: String) -> URL {
         NSPersistentContainer.defaultDirectoryURL().appendingPathComponent(name)
+    }
+
+    private static func transientURL(named name: String) -> URL {
+        URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent("\\(UUID().uuidString)-\\(name)")
     }
 
     private static func makeModel() -> NSManagedObjectModel {
