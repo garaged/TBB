@@ -47,6 +47,11 @@ struct HouseholdHomeView: View {
                 }
             }
 
+            Section {
+                Button("Refresh household data") { model.refreshHouseholdData() }
+                    .accessibilityLabel("Refresh household data")
+            }
+
             Section("Privacy") {
                 Text("Privacy Mode masks amounts only on this device. It does not change the shared records or another participant’s display.")
                     .font(.footnote)

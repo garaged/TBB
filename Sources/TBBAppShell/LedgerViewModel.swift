@@ -150,10 +150,24 @@ final class LedgerViewModel: ObservableObject {
 
     func acceptShareInvitation(_ metadata: CKShare.Metadata) {
         store?.accept(metadata)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+            do {
+                try self.refreshSpaces()
+            } catch {
+                self.errorMessage = "TBB received the household invite but could not refresh shared budgets yet."
+            }
+        }
+    }
+
+    func refreshHouseholdData() {
         do {
             try refreshSpaces()
+            if let activeSpace {
+                state = try store?.load(spaceID: activeSpace.id) ?? state
+            }
+            budgetNotifications.refresh(state: state)
         } catch {
-            errorMessage = "TBB received the household invite but could not refresh shared budgets yet."
+            errorMessage = "TBB could not refresh household data."
         }
     }
     #endif

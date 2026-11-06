@@ -17,6 +17,13 @@ public struct TBBRootView: View {
             if lockController.state == .locked { lockedView } else { applicationTabs }
         }
         .onChange(of: scenePhase) { _, phase in if phase == .background { lockController.lockForBackground() } }
+        .onAppear {
+            #if canImport(CloudKit)
+            HouseholdInvitationRouter.register { metadata in
+                ledgerModel.acceptShareInvitation(metadata)
+            }
+            #endif
+        }
     }
 
     private var applicationTabs: some View {
