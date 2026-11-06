@@ -10,6 +10,10 @@
 6. **Performance:** operation-count and bounded-cache budgets, not flaky wall-clock simulator claims.
 7. **Recovery:** export/import fixtures across supported format versions; malformed and wrong-password cases.
 
+## Manual acceptance protocol
+
+Every manual acceptance begins with the exact PR branch and commit preflight in `docs/manual-testing/README.md`. A manual PASS is valid only when its report records a branch and full SHA matching the PR head.
+
 ## Required manual gates
 
 - iPhone physical-device lock/unlock and Privacy Mode.

@@ -2,6 +2,20 @@
 
 Run this after completing M1 device acceptance. M2 stores only local test data; do not use production financial data yet.
 
+## Required preflight
+
+Confirm you are testing the PR branch, not `main` or a stale local copy:
+
+```bash
+git fetch origin
+git switch feature/m2-ledger
+git pull --ff-only origin feature/m2-ledger
+git rev-parse --short HEAD
+git rev-parse HEAD
+```
+
+Copy the full SHA into PR #3 and verify it exactly matches the PR head SHA before building. See [Manual Acceptance Protocol](README.md) for the permanent rule.
+
 ## Setup
 
 ```bash
@@ -26,4 +40,4 @@ Set a development team, run TBB on an iPhone and iPad, and complete the same flo
 10. Background and relaunch the app with a local password enabled. Verify lock behavior does not discard entered ledger data.
 11. With VoiceOver enabled, verify account, transaction, add-account, record-transaction, and privacy controls have understandable announcements.
 
-Record device model, iOS/iPadOS version, and PASS/FAIL results in PR #3 before merge.
+Record branch, full SHA, device model, iOS/iPadOS version, and PASS/FAIL results in PR #3 before merge.

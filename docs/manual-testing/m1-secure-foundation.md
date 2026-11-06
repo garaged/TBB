@@ -2,6 +2,10 @@
 
 Run this on a physical iPhone and an iPad after generating the Xcode project.
 
+## Required preflight
+
+Follow [Manual Acceptance Protocol](README.md). For M1, replace the branch in the commands with `feature/m1-secure-app-foundation`, record the full tested SHA, and confirm it matches PR #2 before opening Xcode.
+
 ## Setup
 
 ```bash
@@ -24,4 +28,4 @@ Set a development team in Xcode for the TBB target, select a physical device, th
 8. Reinstall or reset the app only after confirming that M1 has no financial records. Confirm the app does not claim password recovery is possible.
 9. Confirm screenshots, system UI, or other apps are not represented as protected by Privacy Mode; Privacy Mode controls only TBB-owned presentation.
 
-Record device model, iOS version, result, and any deviation in the PR before merge.
+Record branch, full SHA, device model, iOS version, result, and any deviation in the PR before merge.
