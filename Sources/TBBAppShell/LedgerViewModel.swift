@@ -9,6 +9,7 @@ final class LedgerViewModel: ObservableObject {
     @Published private(set) var errorMessage: String? = nil
 
     private var store: CoreDataLedgerStore?
+    private let budgetNotifications = BudgetNotificationCoordinator()
 
     init() {
         do {
@@ -16,6 +17,7 @@ final class LedgerViewModel: ObservableObject {
             store = persistentStore
             state = try persistentStore.load(baseCurrencyCode: "MXN")
             seedCategoriesIfNeeded()
+            budgetNotifications.refresh(state: state)
         } catch {
             store = nil
             state = try! LedgerState(baseCurrencyCode: "MXN")
@@ -29,6 +31,35 @@ final class LedgerViewModel: ObservableObject {
             try persist()
         } catch {
             errorMessage = "TBB could not add that account. Account names must be unique."
+        }
+    }
+
+    func addBudget(categoryID: UUID, cadence: BudgetCadence, minorUnits: Int64, startsAt: Date) {
+        do {
+            try state.addBudget(.init(categoryID: categoryID, cadence: cadence, plannedMinorUnits: minorUnits, startsAt: startsAt))
+            try persist()
+            budgetNotifications.requestAuthorizationAndRefresh(state: state)
+        } catch {
+            errorMessage = "TBB could not add that budget. Choose an expense category with no existing budget for this cadence."
+        }
+    }
+
+    func updateBudget(id: UUID, categoryID: UUID, cadence: BudgetCadence, minorUnits: Int64, startsAt: Date) {
+        do {
+            try state.updateBudget(.init(id: id, categoryID: categoryID, cadence: cadence, plannedMinorUnits: minorUnits, startsAt: startsAt))
+            try persist()
+            budgetNotifications.refresh(state: state)
+        } catch {
+            errorMessage = "TBB could not update that budget. Choose an expense category with no existing budget for this cadence."
+        }
+    }
+
+    func deleteBudget(id: UUID) {
+        do {
+            try state.deleteBudget(id: id)
+            try persist()
+        } catch {
+            errorMessage = "TBB could not delete that budget."
         }
     }
 
@@ -47,21 +78,13 @@ final class LedgerViewModel: ObservableObject {
                 try state.recordTransfer(amount: amount, fromAccountID: accountID, toAccountID: destinationID, occurredAt: occurredAt, note: note)
             }
             try persist()
+            budgetNotifications.refresh(state: state)
         } catch {
             errorMessage = "TBB could not record that transaction. Check the account, category, and amount."
         }
     }
 
-    func update(
-        transactionID: UUID,
-        kind: LedgerTransactionKind,
-        minorUnits: Int64,
-        accountID: UUID,
-        categoryID: UUID?,
-        destinationID: UUID?,
-        occurredAt: Date,
-        note: String
-    ) {
+    func update(transactionID: UUID, kind: LedgerTransactionKind, minorUnits: Int64, accountID: UUID, categoryID: UUID?, destinationID: UUID?, occurredAt: Date, note: String) {
         do {
             try state.updateTransaction(
                 id: transactionID,
@@ -74,6 +97,7 @@ final class LedgerViewModel: ObservableObject {
                 note: note
             )
             try persist()
+            budgetNotifications.refresh(state: state)
         } catch {
             errorMessage = "TBB could not update that transaction. Check the account, category, and amount."
         }
@@ -83,6 +107,7 @@ final class LedgerViewModel: ObservableObject {
         do {
             try state.deleteTransaction(id: transactionID)
             try persist()
+            budgetNotifications.refresh(state: state)
         } catch {
             errorMessage = "TBB could not delete that transaction."
         }

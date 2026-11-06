@@ -4,26 +4,11 @@ TBB is an Apple-native, local-first modular monolith implemented in Swift. iPhon
 
 ## Storage decision
 
-TBB uses Core Data backed by `NSPersistentCloudKitContainer`, with separate private and shared stores. This is intentional: Apple’s supported model for multi-user CloudKit sharing requires private/shared stores, history tracking, and remote-change handling. SwiftUI is the UI layer; domain services and repositories remain independent of it.
+TBB uses Core Data backed by NSPersistentCloudKitContainer, with separate private and shared stores. SwiftUI is the UI layer; domain services and repositories remain independent of it.
 
-M2 persists a versioned canonical `LedgerState` snapshot through Core Data. This gives users durable local data now while retaining a clean migration boundary: M5 replaces the local snapshot adapter with the private/shared CloudKit store adapter without changing money, ledger, or UI contracts.
+M2 persists a versioned canonical LedgerState snapshot through Core Data. M4 extends that same snapshot with budget plans; decoding an older snapshot defaults the missing collection to empty. This gives users durable local data now while retaining a clean migration boundary: M5 replaces the local snapshot adapter with the private/shared CloudKit store adapter without changing money, ledger, budget, or UI contracts.
 
-```mermaid
-flowchart TB
-  UI["SwiftUI apps\niPhone · iPad · Watch"]
-  Features["Feature modules\nLedger · Budgets · Dashboards · Privacy"]
-  Domain["Deterministic domain services\nminor-unit money · period math · validation"]
-  Repos["Repository contracts"]
-  Local["Core Data ledger snapshot"]
-  Private["Future private store"]
-  Shared["Future shared store"]
-  CK["User-owned CloudKit container"]
-
-  UI --> Features --> Domain --> Repos
-  Repos --> Local
-  Repos -. M5 migration .-> Private --> CK
-  Repos -. M5 sharing .-> Shared --> CK
-```
+Budget plans are deterministic projections over ledger transactions. They never manufacture transactions or change the ledger to represent a plan. Local notifications are a device-only presentation adapter: their identifiers and payloads contain no amounts, and they have no server or CloudKit dependency.
 
 ## Module rules
 
@@ -36,11 +21,9 @@ flowchart TB
 | Security | contracts, Security/LocalAuthentication | feature views |
 | Backup | Domain contracts, CryptoKit | UI implementations |
 
-Architecture tests will enforce no reverse dependencies.
-
 ## Household-sharing boundary
 
-A `BudgetSpace` is either `private` or `shared`. A shared space forms one CloudKit shareable object graph: accounts, transactions, categories, rules, and audit entries belong to that space. Cross-space relationships are forbidden. Sharing starts through Apple system UI with invite-only access; acceptance is handled as an explicit app lifecycle event.
+A BudgetSpace is either private or shared. A shared space forms one CloudKit shareable object graph: accounts, transactions, categories, budget plans, rules, and audit entries belong to that space. Cross-space relationships are forbidden.
 
 ## Performance rules
 
