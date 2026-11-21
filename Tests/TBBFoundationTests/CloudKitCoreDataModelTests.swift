@@ -3,7 +3,7 @@ import CoreData
 import Testing
 @testable import TBBFoundation
 
-@Test func cloudKitBackedAttributesAreOptional() {
+@MainActor @Test func cloudKitBackedAttributesAreOptional() {
     let model = CoreDataLedgerStore.makeModel()
 
     for entityName in ["BudgetSpace", "BudgetMutation"] {
