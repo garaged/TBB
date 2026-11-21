@@ -89,7 +89,7 @@ public final class CoreDataLedgerStore {
 
         #if DEBUG
         let loadedStores = stores.map {
-            "\($0.configurationName ?? "unnamed") @ \($0.url?.lastPathComponent ?? "unknown")"
+            "\($0.configurationName) @ \($0.url?.lastPathComponent ?? "unknown")"
         }.joined(separator: ", ")
         print("TBB persistent stores: \(loadedStores)")
         #endif
@@ -163,7 +163,7 @@ public final class CoreDataLedgerStore {
         let space = try managedSpace(id: spaceID)
         let existing = try cloud.fetchShares(matching: [space.objectID])[space.objectID]
 
-        return try await withCheckedThrowingContinuation { continuation in
+        let session: CloudKitShareSession = try await withCheckedThrowingContinuation { continuation in
             cloud.share([space], to: existing) { _, share, cloudKitContainer, error in
                 if let error {
                     continuation.resume(throwing: error)
@@ -173,15 +173,13 @@ public final class CoreDataLedgerStore {
                     continuation.resume(throwing: LedgerPersistenceError.sharingUnavailable)
                     return
                 }
-                space.setValue(BudgetSpaceScope.shared.rawValue, forKey: "scope")
-                do {
-                    try self.container.viewContext.save()
-                    continuation.resume(returning: .init(share: share, container: cloudKitContainer))
-                } catch {
-                    continuation.resume(throwing: error)
-                }
+                continuation.resume(returning: .init(share: share, container: cloudKitContainer))
             }
         }
+
+        space.setValue(BudgetSpaceScope.shared.rawValue, forKey: "scope")
+        try container.viewContext.save()
+        return session
     }
 
     public func accept(_ metadata: CKShare.Metadata) {
