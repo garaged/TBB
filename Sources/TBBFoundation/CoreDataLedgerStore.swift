@@ -9,6 +9,8 @@ public enum LedgerPersistenceError: Error, Equatable, Sendable {
     case unreadableSnapshot
     case unknownBudgetSpace
     case sharingUnavailable
+    case cloudContainerUnavailable
+    case privateCloudStoreUnavailable
 }
 
 public struct StoredBudgetSpace: Identifiable, Equatable, Sendable {
@@ -84,6 +86,13 @@ public final class CoreDataLedgerStore {
             $0.url?.lastPathComponent.hasSuffix("TBBHousehold-shared.sqlite") == true
         })
         #endif
+
+        #if DEBUG
+        let loadedStores = stores.map {
+            "\\($0.configurationName ?? "unnamed") @ \\($0.url?.lastPathComponent ?? "unknown")"
+        }.joined(separator: ", ")
+        print("TBB persistent stores: \\(loadedStores)")
+        #endif
     }
 
     public func load(baseCurrencyCode: String) throws -> LedgerState {
@@ -140,9 +149,11 @@ public final class CoreDataLedgerStore {
 
     #if canImport(CloudKit)
     public func createOrFetchShare(for spaceID: UUID) async throws -> CloudKitShareSession {
-        guard let cloud = container as? NSPersistentCloudKitContainer,
-              privateStore != nil else {
-            throw LedgerPersistenceError.sharingUnavailable
+        guard let cloud = container as? NSPersistentCloudKitContainer else {
+            throw LedgerPersistenceError.cloudContainerUnavailable
+        }
+        guard privateStore != nil else {
+            throw LedgerPersistenceError.privateCloudStoreUnavailable
         }
 
         #if DEBUG
