@@ -135,6 +135,10 @@ public final class CoreDataLedgerStore {
             throw LedgerPersistenceError.sharingUnavailable
         }
 
+        #if DEBUG
+        try initializeDevelopmentSchemaIfNeeded(using: cloud)
+        #endif
+
         let space = try managedSpace(id: spaceID)
         let existing = try cloud.fetchShares(matching: [space.objectID])[space.objectID]
 
@@ -311,6 +315,17 @@ public final class CoreDataLedgerStore {
         UserDefaults.standard.set(id.uuidString, forKey: key)
         return id
     }
+
+    #if DEBUG
+    private func initializeDevelopmentSchemaIfNeeded(using cloud: NSPersistentCloudKitContainer) throws {
+        let schemaVersion = 1
+        let preferenceKey = "TBB.CloudKit.development-schema-version"
+
+        guard UserDefaults.standard.integer(forKey: preferenceKey) < schemaVersion else { return }
+        try cloud.initializeCloudKitSchema(options: [])
+        UserDefaults.standard.set(schemaVersion, forKey: preferenceKey)
+    }
+    #endif
 
     private static func load(_ container: NSPersistentContainer) throws {
         var loadError: Error?
