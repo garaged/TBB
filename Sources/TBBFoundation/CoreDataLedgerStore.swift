@@ -53,16 +53,19 @@ public final class CoreDataLedgerStore {
         let model = Self.makeModel()
         let cloud = !inMemory ? Self.makeCloudContainer(model: model) : nil
 
-        do {
-            if let cloud {
+        if let cloud {
+            do {
                 try Self.load(cloud)
                 container = cloud
-            } else {
+            } catch {
+                #if DEBUG
+                print("TBB CloudKit store load failed; using local-only storage: \\(error)")
+                #endif
                 let local = Self.makeLocalContainer(model: model, inMemory: inMemory)
                 try Self.load(local)
                 container = local
             }
-        } catch {
+        } else {
             let local = Self.makeLocalContainer(model: model, inMemory: inMemory)
             try Self.load(local)
             container = local
@@ -73,9 +76,13 @@ public final class CoreDataLedgerStore {
 
         let stores = container.persistentStoreCoordinator.persistentStores
         legacyStore = stores.first(where: { $0.configurationName == "Legacy" })
-        privateStore = stores.first(where: { $0.configurationName == "CloudPrivate" })
+        privateStore = stores.first(where: {
+            $0.url?.lastPathComponent.hasSuffix("TBBHousehold-private.sqlite") == true
+        })
         #if canImport(CloudKit)
-        sharedStore = stores.first(where: { $0.configurationName == "CloudShared" })
+        sharedStore = stores.first(where: {
+            $0.url?.lastPathComponent.hasSuffix("TBBHousehold-shared.sqlite") == true
+        })
         #endif
     }
 
@@ -121,6 +128,9 @@ public final class CoreDataLedgerStore {
             mutation.setValue(origin, forKey: "originDeviceID")
             mutation.setValue(try JSONEncoder().encode(payload), forKey: "payload")
             mutation.setValue(Date.now, forKey: "createdAt")
+            if let persistentStore = space.objectID.persistentStore {
+                container.viewContext.assign(mutation, to: persistentStore)
+            }
             mutation.setValue(space, forKey: "space")
         }
 
@@ -188,6 +198,9 @@ public final class CoreDataLedgerStore {
         space.setValue(try JSONEncoder().encode(initialState), forKey: "initialState")
         space.setValue(Int64(0), forKey: "logicalClock")
         space.setValue(Date.now, forKey: "createdAt")
+        if let privateStore {
+            container.viewContext.assign(space, to: privateStore)
+        }
         try container.viewContext.save()
         return space
     }
@@ -346,12 +359,12 @@ public final class CoreDataLedgerStore {
         sharedOptions.databaseScope = .shared
         let privateStore = description(
             url: persistentURL(named: "TBBHousehold-private.sqlite"),
-            configuration: "CloudPrivate",
+            configuration: "CloudLedger",
             options: privateOptions
         )
         let sharedStore = description(
             url: persistentURL(named: "TBBHousehold-shared.sqlite"),
-            configuration: "CloudShared",
+            configuration: "CloudLedger",
             options: sharedOptions
         )
         container.persistentStoreDescriptions = [legacy, privateStore, sharedStore]
@@ -368,7 +381,7 @@ public final class CoreDataLedgerStore {
         )
         let privateStore = description(
             url: inMemory ? transientURL(named: "TBBHousehold-private.sqlite") : persistentURL(named: "TBBHousehold-private.sqlite"),
-            configuration: "CloudPrivate",
+            configuration: "CloudLedger",
             options: nil,
             inMemory: inMemory
         )
@@ -386,6 +399,10 @@ public final class CoreDataLedgerStore {
         description.configuration = configuration
         if inMemory { description.type = NSInMemoryStoreType }
         description.url = url
+        if options != nil {
+            description.setOption(true as NSNumber, forKey: NSPersistentHistoryTrackingKey)
+            description.setOption(true as NSNumber, forKey: NSPersistentStoreRemoteChangeNotificationPostOptionKey)
+        }
         description.cloudKitContainerOptions = options
         return description
     }
@@ -459,8 +476,7 @@ public final class CoreDataLedgerStore {
         let model = NSManagedObjectModel()
         model.entities = [legacy, space, mutation]
         model.setEntities([legacy], forConfigurationName: "Legacy")
-        model.setEntities([space, mutation], forConfigurationName: "CloudPrivate")
-        model.setEntities([space, mutation], forConfigurationName: "CloudShared")
+        model.setEntities([space, mutation], forConfigurationName: "CloudLedger")
         return model
     }
 
