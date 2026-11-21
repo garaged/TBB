@@ -190,9 +190,17 @@ final class LedgerViewModel: ObservableObject {
             }
         }
 
-        if let persistenceError = error as? LedgerPersistenceError,
-           persistenceError == .sharingUnavailable {
-            return "iCloud sharing is unavailable in this build. Confirm the CloudKit container is enabled for TBB, then reinstall and try again."
+        if let persistenceError = error as? LedgerPersistenceError {
+            switch persistenceError {
+            case .cloudContainerUnavailable:
+                return "TBB started in local-only mode because CloudKit could not load. Reinstall the current build, then check the Xcode console."
+            case .privateCloudStoreUnavailable:
+                return "TBB could not configure its private CloudKit store. Reinstall the current build, then check the Xcode console."
+            case .sharingUnavailable:
+                return "iCloud sharing is unavailable in this build. Confirm the CloudKit container is enabled for TBB, then reinstall and try again."
+            default:
+                break
+            }
         }
 
         return "TBB could not start iCloud sharing. Confirm this device is signed in to iCloud, then try again."
