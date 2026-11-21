@@ -89,9 +89,9 @@ public final class CoreDataLedgerStore {
 
         #if DEBUG
         let loadedStores = stores.map {
-            "\\($0.configurationName ?? "unnamed") @ \\($0.url?.lastPathComponent ?? "unknown")"
+            "\($0.configurationName ?? "unnamed") @ \($0.url?.lastPathComponent ?? "unknown")"
         }.joined(separator: ", ")
-        print("TBB persistent stores: \\(loadedStores)")
+        print("TBB persistent stores: \(loadedStores)")
         #endif
     }
 
