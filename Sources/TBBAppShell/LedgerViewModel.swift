@@ -144,7 +144,7 @@ final class LedgerViewModel: ObservableObject {
             return session
         } catch {
             #if DEBUG
-            print("TBB CloudKit sharing failed: \\(error)")
+            print("TBB CloudKit sharing failed: \(error)")
             #endif
             errorMessage = householdSharingMessage(for: error)
             return nil
