@@ -143,7 +143,10 @@ final class LedgerViewModel: ObservableObject {
             try refreshSpaces()
             return session
         } catch {
-            errorMessage = "TBB could not start iCloud sharing. Check your iCloud account and try again."
+            #if DEBUG
+            print("TBB CloudKit sharing failed: \\(error)")
+            #endif
+            errorMessage = householdSharingMessage(for: error)
             return nil
         }
     }
@@ -169,6 +172,30 @@ final class LedgerViewModel: ObservableObject {
         } catch {
             errorMessage = "TBB could not refresh household data."
         }
+    }
+    #endif
+
+    #if canImport(CloudKit)
+    private func householdSharingMessage(for error: Error) -> String {
+        if let cloudError = error as? CKError {
+            switch cloudError.code {
+            case .notAuthenticated:
+                return "Sign in to iCloud in Settings, enable iCloud Drive, then close and reopen TBB before sharing."
+            case .accountTemporarilyUnavailable:
+                return "Your iCloud account is not ready for sharing yet. Wait a moment, then try again."
+            case .networkUnavailable, .networkFailure:
+                return "TBB needs an internet connection to start household sharing. Check the connection and try again."
+            default:
+                break
+            }
+        }
+
+        if let persistenceError = error as? LedgerPersistenceError,
+           persistenceError == .sharingUnavailable {
+            return "iCloud sharing is unavailable in this build. Confirm the CloudKit container is enabled for TBB, then reinstall and try again."
+        }
+
+        return "TBB could not start iCloud sharing. Confirm this device is signed in to iCloud, then try again."
     }
     #endif
 
