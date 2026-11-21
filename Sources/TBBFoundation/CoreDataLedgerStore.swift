@@ -59,7 +59,7 @@ public final class CoreDataLedgerStore {
                 container = cloud
             } catch {
                 #if DEBUG
-                print("TBB CloudKit store load failed; using local-only storage: \\(error)")
+                print("TBB CloudKit store load failed; using local-only storage: \(error)")
                 #endif
                 let local = Self.makeLocalContainer(model: model, inMemory: inMemory)
                 try Self.load(local)
