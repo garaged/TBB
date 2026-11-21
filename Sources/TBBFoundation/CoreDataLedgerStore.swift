@@ -438,25 +438,25 @@ public final class CoreDataLedgerStore {
         legacy.properties = [key, payload, updatedAt]
         legacy.uniquenessConstraints = [["key"]]
 
-        let spaceID = attribute(name: "spaceID", type: .UUIDAttributeType)
-        let name = attribute(name: "name", type: .stringAttributeType)
-        let scope = attribute(name: "scope", type: .stringAttributeType)
-        let initialState = attribute(name: "initialState", type: .binaryDataAttributeType)
+        let spaceID = attribute(name: "spaceID", type: .UUIDAttributeType, optional: true)
+        let name = attribute(name: "name", type: .stringAttributeType, optional: true)
+        let scope = attribute(name: "scope", type: .stringAttributeType, optional: true)
+        let initialState = attribute(name: "initialState", type: .binaryDataAttributeType, optional: true)
         initialState.allowsExternalBinaryDataStorage = true
-        let logicalClock = attribute(name: "logicalClock", type: .integer64AttributeType)
-        let createdAt = attribute(name: "createdAt", type: .dateAttributeType)
+        let logicalClock = attribute(name: "logicalClock", type: .integer64AttributeType, optional: true)
+        let createdAt = attribute(name: "createdAt", type: .dateAttributeType, optional: true)
 
         let space = NSEntityDescription()
         space.name = "BudgetSpace"
         space.managedObjectClassName = NSStringFromClass(NSManagedObject.self)
         space.properties = [spaceID, name, scope, initialState, logicalClock, createdAt]
 
-        let mutationID = attribute(name: "mutationID", type: .UUIDAttributeType)
-        let logicalTimestamp = attribute(name: "logicalTimestamp", type: .integer64AttributeType)
-        let originDeviceID = attribute(name: "originDeviceID", type: .UUIDAttributeType)
-        let mutationPayload = attribute(name: "payload", type: .binaryDataAttributeType)
+        let mutationID = attribute(name: "mutationID", type: .UUIDAttributeType, optional: true)
+        let logicalTimestamp = attribute(name: "logicalTimestamp", type: .integer64AttributeType, optional: true)
+        let originDeviceID = attribute(name: "originDeviceID", type: .UUIDAttributeType, optional: true)
+        let mutationPayload = attribute(name: "payload", type: .binaryDataAttributeType, optional: true)
         mutationPayload.allowsExternalBinaryDataStorage = true
-        let mutationCreatedAt = attribute(name: "createdAt", type: .dateAttributeType)
+        let mutationCreatedAt = attribute(name: "createdAt", type: .dateAttributeType, optional: true)
 
         let mutation = NSEntityDescription()
         mutation.name = "BudgetMutation"
@@ -491,11 +491,15 @@ public final class CoreDataLedgerStore {
         return model
     }
 
-    private static func attribute(name: String, type: NSAttributeType) -> NSAttributeDescription {
+    private static func attribute(
+        name: String,
+        type: NSAttributeType,
+        optional: Bool = false
+    ) -> NSAttributeDescription {
         let attribute = NSAttributeDescription()
         attribute.name = name
         attribute.attributeType = type
-        attribute.isOptional = false
+        attribute.isOptional = optional
         return attribute
     }
 }
