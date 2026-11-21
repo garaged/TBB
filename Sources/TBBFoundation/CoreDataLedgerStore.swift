@@ -426,7 +426,7 @@ public final class CoreDataLedgerStore {
         URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent("\(UUID().uuidString)-\(name)")
     }
 
-    private static func makeModel() -> NSManagedObjectModel {
+    static func makeModel() -> NSManagedObjectModel {
         let key = attribute(name: "key", type: .stringAttributeType)
         let payload = attribute(name: "payload", type: .binaryDataAttributeType)
         payload.allowsExternalBinaryDataStorage = true
