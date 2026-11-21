@@ -36,7 +36,7 @@ struct HouseholdHomeView: View {
                     Text("TBB uses Apple’s private CloudKit sharing. It does not create a TBB account or send your financial data to a TBB server.")
                         .font(.footnote)
                         .foregroundStyle(.secondary)
-                } else if let active = model.activeSpace {
+                } else if model.activeSpace != nil {
                     Label("This budget is shared with you", systemImage: "person.2.fill")
                     Text("The owner manages participants. Your local lock and Privacy Mode remain private to this device.")
                         .font(.footnote)
@@ -72,7 +72,12 @@ struct HouseholdHomeView: View {
     private var selectedSpaceID: Binding<UUID?> {
         .init(
             get: { model.activeSpace?.id },
-            set: { if let id = $0 { model.selectBudgetSpace(id: id) } }
+            set: { id in
+                guard let id else { return }
+                DispatchQueue.main.async {
+                    model.selectBudgetSpace(id: id)
+                }
+            }
         )
     }
 
