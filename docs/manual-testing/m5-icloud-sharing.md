@@ -19,6 +19,15 @@ Record the full SHA and verify it matches the M5 pull request before testing. Se
 - One owner account and one participant account with iCloud Drive enabled.
 - Network controls sufficient to put the participant device offline and online.
 
+## Optional simulator smoke test
+
+Simulator validation may exercise the development path but does not replace the required real-device acceptance.
+
+1. Sign the owner simulator into an Apple Account in **Settings**, enable **iCloud Drive**, then force-quit and relaunch TBB.
+2. Sign a second simulator into a different Apple Account for the invitation-acceptance check.
+3. On the owner simulator, tap **Share household budget**. The first Debug share attempt initializes TBB’s **Development** CloudKit schema; wait for it to complete, then retry if iCloud reports that the account is still becoming available.
+4. Do not add records manually, import a schema, reset the environment, or deploy schema changes to Production. Inspect the Development schema only after TBB completes its initialization.
+
 ## Acceptance
 
 1. On the owner device, create or choose a private household space and record an account, expense category, transaction, and budget.
