@@ -7,10 +7,10 @@ import Testing
     let model = CoreDataLedgerStore.makeModel()
 
     for entityName in ["BudgetSpace", "BudgetMutation"] {
-        let attributes = model.entitiesByName[entityName]?.attributesByName.values ?? []
+        let attributes = model.entitiesByName[entityName]?.attributesByName ?? [:]
         #expect(!attributes.isEmpty)
 
-        for attribute in attributes {
+        for attribute in attributes.values {
             #expect(attribute.isOptional)
         }
     }
