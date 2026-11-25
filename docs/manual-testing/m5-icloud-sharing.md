@@ -12,6 +12,8 @@ git rev-parse HEAD
 
 Record the full SHA and verify it matches the M5 pull request before testing. See the Manual Acceptance Protocol.
 
+Run `make m5-evidence` to capture the branch, full SHA, last-fetched remote comparison, configured container, and booted simulators. Enter the owner and participant device models, OS versions, and network conditions when prompted. Physical device details and all role/network entries are user-reported. The script does not verify the installed app or current PR head; compare the SHA against the PR yourself. Review the output before sharing because simulator inventory includes device identifiers. Optionally save it with `make m5-evidence > /tmp/tbb-m5-evidence.txt`.
+
 ## Required setup
 
 - Two real Apple devices signed into different Apple Accounts. Simulator-only validation is insufficient for this milestone.
