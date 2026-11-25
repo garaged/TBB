@@ -58,6 +58,12 @@ struct HouseholdHomeView: View {
             Section {
                 Button("Refresh household data") { model.refreshHouseholdData() }
                     .accessibilityLabel("Refresh household data")
+                if let message = model.householdRefreshMessage {
+                    Text(message)
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                        .accessibilityAddTraits(.isStaticText)
+                }
             }
 
             Section("Privacy") {
