@@ -21,7 +21,7 @@ Record the full SHA and verify it matches the M5 pull request before testing. Se
 
 ## Optional simulator smoke test
 
-Simulator validation may exercise the development path but does not replace the required real-device acceptance.
+Simulator validation may exercise the development path but does not replace the required real-device acceptance. After updating the branch, regenerate the Xcode project with `xcodegen generate` and rebuild TBB on both simulators. Confirm the recipient app's built `Info.plist` contains `CKSharingSupported = true`.
 
 1. Sign the owner simulator into an Apple Account in **Settings**, enable **iCloud Drive**, then force-quit and relaunch TBB.
 2. Sign a second simulator into a different Apple Account for the invitation-acceptance check.
