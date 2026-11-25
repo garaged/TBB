@@ -132,6 +132,20 @@ final class LedgerViewModel: ObservableObject {
         }
     }
 
+    func renameActiveBudgetSpace(to name: String) -> Bool {
+        guard let store, let activeSpace else { return false }
+        do {
+            try store.renameBudgetSpace(id: activeSpace.id, to: name)
+            try refreshSpaces()
+            return true
+        } catch LedgerPersistenceError.invalidBudgetSpaceName {
+            errorMessage = "Enter a budget name between 1 and 80 characters."
+        } catch {
+            errorMessage = "TBB could not rename this budget."
+        }
+        return false
+    }
+
     #if canImport(CloudKit)
     func createOrFetchShareForActiveSpace() async -> CloudKitShareSession? {
         guard let store, let activeSpace else {
