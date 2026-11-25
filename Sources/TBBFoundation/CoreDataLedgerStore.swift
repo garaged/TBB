@@ -107,6 +107,12 @@ public final class CoreDataLedgerStore {
         return try projection(for: space).state
     }
 
+    /// Refreshes this device's cached Core Data objects, without forcing an iCloud sync.
+    public func refreshLocalView() {
+        guard !container.viewContext.hasChanges else { return }
+        container.viewContext.refreshAllObjects()
+    }
+
     public func budgetSpaces(baseCurrencyCode: String) throws -> [StoredBudgetSpace] {
         _ = try defaultSpace(baseCurrencyCode: baseCurrencyCode)
         let request = NSFetchRequest<NSManagedObject>(entityName: "BudgetSpace")
