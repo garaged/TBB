@@ -1,9 +1,9 @@
-.PHONY: ci spec-check m5-evidence
+.PHONY: ci spec-check test-evidence
 
 spec-check:
 	bash scripts/spec-check.sh
 
 ci: spec-check
 
-m5-evidence:
-	@bash scripts/m5-test-evidence.sh
+test-evidence:
+	@bash scripts/test-evidence.sh
