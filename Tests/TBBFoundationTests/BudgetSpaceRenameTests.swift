@@ -27,4 +27,15 @@ import Testing
     }
     #expect(try store.defaultBudgetSpace(baseCurrencyCode: "MXN").name == space.name)
 }
+@MainActor @Test func refreshingLocalViewPreservesRenamedSpaceAndLedger() throws {
+    let store = try CoreDataLedgerStore(inMemory: true)
+    let space = try store.defaultBudgetSpace(baseCurrencyCode: "MXN")
+    let originalState = try store.load(spaceID: space.id)
+    try store.renameBudgetSpace(id: space.id, to: "Family")
+
+    try store.refreshLocalView()
+
+    #expect(try store.defaultBudgetSpace(baseCurrencyCode: "MXN").name == "Family")
+    #expect(try store.load(spaceID: space.id) == originalState)
+}
 #endif
