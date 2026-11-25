@@ -7,16 +7,24 @@ import UIKit
 struct HouseholdHomeView: View {
     @ObservedObject var model: LedgerViewModel
     @State private var shareSession: ShareSheetSession?
+    @State private var showingRename = false
+    @State private var newName = ""
 
     var body: some View {
         Form {
             Section("Current budget") {
                 Picker("Budget space", selection: selectedSpaceID) {
                     ForEach(model.spaces) { space in
-                        Text(space.name).tag(Optional(space.id))
+                        Text("\(space.name) — \(spaceDescription(space))").tag(Optional(space.id))
                     }
                 }
                 .accessibilityLabel("Active household budget")
+                if let active = model.activeSpace, active.role == .owner {
+                    Button("Rename budget") {
+                        newName = active.name
+                        showingRename = true
+                    }
+                }
                 if let active = model.activeSpace {
                     Label(active.scope == .shared ? "Shared household budget" : "Private budget", systemImage: active.scope == .shared ? "person.2.fill" : "lock.fill")
                         .foregroundStyle(.secondary)
@@ -59,6 +67,13 @@ struct HouseholdHomeView: View {
             }
         }
         .navigationTitle("Household")
+        .alert("Rename budget", isPresented: $showingRename) {
+            TextField("Budget name", text: $newName)
+            Button("Cancel", role: .cancel) {}
+            Button("Save") { _ = model.renameActiveBudgetSpace(to: newName) }
+        } message: {
+            Text("For shared budgets, the name is visible to participants.")
+        }
         .sheet(item: $shareSession) { session in
             SystemCloudSharingSheet(session: session.value)
         }
@@ -67,6 +82,11 @@ struct HouseholdHomeView: View {
         } message: {
             Text(model.errorMessage ?? "")
         }
+    }
+
+    private func spaceDescription(_ space: StoredBudgetSpace) -> String {
+        if space.role == .participant { return "Shared with you" }
+        return space.scope == .shared ? "Shared by you" : "Private"
     }
 
     private var selectedSpaceID: Binding<UUID?> {
