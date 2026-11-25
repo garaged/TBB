@@ -1,12 +1,18 @@
 #if canImport(SwiftUI) && canImport(CoreData)
 import Combine
 import Foundation
+#if canImport(CloudKit)
+import CloudKit
+#endif
 import TBBFoundation
 
 @MainActor
 final class LedgerViewModel: ObservableObject {
     @Published private(set) var state: LedgerState
     @Published private(set) var errorMessage: String? = nil
+    @Published private(set) var spaces: [StoredBudgetSpace] = []
+    @Published private(set) var activeSpace: StoredBudgetSpace? = nil
+    @Published private(set) var householdRefreshMessage: String? = nil
 
     private var store: CoreDataLedgerStore?
     private let budgetNotifications = BudgetNotificationCoordinator()
@@ -15,7 +21,10 @@ final class LedgerViewModel: ObservableObject {
         do {
             let persistentStore = try CoreDataLedgerStore()
             store = persistentStore
-            state = try persistentStore.load(baseCurrencyCode: "MXN")
+            let active = try persistentStore.defaultBudgetSpace(baseCurrencyCode: "MXN")
+            state = try persistentStore.load(spaceID: active.id)
+            activeSpace = active
+            spaces = try persistentStore.budgetSpaces(baseCurrencyCode: "MXN")
             seedCategoriesIfNeeded()
             budgetNotifications.refresh(state: state)
         } catch {
@@ -113,6 +122,114 @@ final class LedgerViewModel: ObservableObject {
         }
     }
 
+    func selectBudgetSpace(id: UUID) {
+        do {
+            guard let selected = spaces.first(where: { $0.id == id }) else { return }
+            state = try store?.load(spaceID: id) ?? state
+            activeSpace = selected
+            budgetNotifications.refresh(state: state)
+        } catch {
+            errorMessage = "TBB could not open that household budget."
+        }
+    }
+
+    func renameActiveBudgetSpace(to name: String) -> Bool {
+        guard let store, let activeSpace else { return false }
+        do {
+            try store.renameBudgetSpace(id: activeSpace.id, to: name)
+            try refreshSpaces()
+            return true
+        } catch LedgerPersistenceError.invalidBudgetSpaceName {
+            errorMessage = "Enter a budget name between 1 and 80 characters."
+        } catch {
+            errorMessage = "TBB could not rename this budget."
+        }
+        return false
+    }
+
+    #if canImport(CloudKit)
+    func createOrFetchShareForActiveSpace() async -> CloudKitShareSession? {
+        guard let store, let activeSpace else {
+            errorMessage = "TBB could not prepare household sharing."
+            return nil
+        }
+        do {
+            let session = try await store.createOrFetchShare(for: activeSpace.id)
+            try refreshSpaces()
+            return session
+        } catch {
+            #if DEBUG
+            print("TBB CloudKit sharing failed: \(error)")
+            #endif
+            errorMessage = householdSharingMessage(for: error)
+            return nil
+        }
+    }
+
+    func acceptShareInvitation(_ metadata: CKShare.Metadata) {
+        store?.accept(metadata)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+            do {
+                try self.refreshSpaces()
+            } catch {
+                self.errorMessage = "TBB received the household invite but could not refresh shared budgets yet."
+            }
+        }
+    }
+
+    func refreshHouseholdData() {
+        guard let store else {
+            householdRefreshMessage = nil
+            errorMessage = "TBB could not access local budget storage."
+            return
+        }
+        do {
+            try store.refreshLocalView()
+            try refreshSpaces()
+            if let activeSpace {
+                state = try store.load(spaceID: activeSpace.id)
+            }
+            budgetNotifications.refresh(state: state)
+            householdRefreshMessage = "Local data refreshed. iCloud sync happens automatically and may take time."
+        } catch {
+            householdRefreshMessage = nil
+            errorMessage = "TBB could not refresh household data. Please try again."
+        }
+    }
+    #endif
+
+    #if canImport(CloudKit)
+    private func householdSharingMessage(for error: Error) -> String {
+        if let cloudError = error as? CKError {
+            switch cloudError.code {
+            case .notAuthenticated:
+                return "Sign in to iCloud in Settings, enable iCloud Drive, then close and reopen TBB before sharing."
+            case .accountTemporarilyUnavailable:
+                return "Your iCloud account is not ready for sharing yet. Wait a moment, then try again."
+            case .networkUnavailable, .networkFailure:
+                return "TBB needs an internet connection to start household sharing. Check the connection and try again."
+            default:
+                break
+            }
+        }
+
+        if let persistenceError = error as? LedgerPersistenceError {
+            switch persistenceError {
+            case .cloudContainerUnavailable:
+                return "TBB started in local-only mode because CloudKit could not load. Reinstall the current build, then check the Xcode console."
+            case .privateCloudStoreUnavailable:
+                return "TBB could not configure its private CloudKit store. Reinstall the current build, then check the Xcode console."
+            case .sharingUnavailable:
+                return "iCloud sharing is unavailable in this build. Confirm the CloudKit container is enabled for TBB, then reinstall and try again."
+            default:
+                break
+            }
+        }
+
+        return "TBB could not start iCloud sharing. Confirm this device is signed in to iCloud, then try again."
+    }
+    #endif
+
     func balance(for account: LedgerAccount) -> Money {
         (try? state.balance(of: account.id)) ?? (try! Money(minorUnits: 0, currencyCode: account.currencyCode))
     }
@@ -134,6 +251,23 @@ final class LedgerViewModel: ObservableObject {
         }
     }
 
-    private func persist() throws { try store?.save(state) }
+    private func persist() throws {
+        if let activeSpace {
+            try store?.save(state, in: activeSpace.id)
+        } else {
+            try store?.save(state)
+        }
+        try refreshSpaces()
+    }
+
+    private func refreshSpaces() throws {
+        guard let store else { return }
+        spaces = try store.budgetSpaces(baseCurrencyCode: state.baseCurrencyCode)
+        if let activeSpace {
+            self.activeSpace = spaces.first(where: { $0.id == activeSpace.id }) ?? activeSpace
+        } else {
+            self.activeSpace = try store.defaultBudgetSpace(baseCurrencyCode: state.baseCurrencyCode)
+        }
+    }
 }
 #endif

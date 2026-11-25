@@ -5,10 +5,10 @@
 | TBB-FND-001 | Foundation workflow and quality gates | Accepted | spec check and CI |
 | TBB-SEC-001 | Local lock and Privacy Mode | Implemented | Security/UI tests + M1 manual acceptance |
 | TBB-DAT-001 | Deterministic ledger and money model | Implemented | Ledger and Core Data tests + M2 manual acceptance |
-| TBB-BUD-001 | Recurring category budgets and alerts | In progress | Budget projections/migration tests + M4 manual acceptance |
+| TBB-BUD-001 | Recurring category budgets and alerts | Implemented | Budget projections/migration tests + M4 acceptance |
 | TBB-CUR-001 | Currency and exchange-rate integrity | Draft | Money/property/migration tests |
 | TBB-I18N-001 | Localization, regional behavior, and accessible presentation | Draft | Locale/UI/accessibility tests |
-| TBB-SHR-001 | Household sharing | Draft | Sync and physical-device tests |
+| TBB-SHR-001 | Household sharing | In progress | Space, sync, audit, and two-Apple-Account acceptance tests |
 | TBB-BKP-001 | Backup and restore | Planned | Compatibility/restore tests |
 | TBB-UX-001 | Dashboard time navigation | Implemented | Navigator/insight tests + M3 manual acceptance |
 

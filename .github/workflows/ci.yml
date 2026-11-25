@@ -12,6 +12,8 @@ jobs:
       - uses: actions/checkout@v4
       - name: Verify specifications and repository policy
         run: make ci
+      - name: Validate test evidence script syntax
+        run: bash -n scripts/test-evidence.sh
       - name: Run the deterministic Swift foundation tests
         run: swift test
       - name: Generate the app icon
@@ -21,4 +23,8 @@ jobs:
       - name: Generate the Apple project
         run: xcodegen generate
       - name: Build the universal iPhone and iPad app target
-        run: xcodebuild -project TBB.xcodeproj -scheme TBB -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' build CODE_SIGNING_ALLOWED=NO
+        run: xcodebuild -project TBB.xcodeproj -scheme TBB -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath "$RUNNER_TEMP/tbb-derived" build CODE_SIGNING_ALLOWED=NO
+      - name: Verify CloudKit sharing support in built app
+        run: |
+          plist="$RUNNER_TEMP/tbb-derived/Build/Products/Debug-iphonesimulator/TBB.app/Info.plist"
+          test "$(/usr/libexec/PlistBuddy -c 'Print :CKSharingSupported' "$plist")" = "true"
