@@ -17,6 +17,8 @@ Allow an owner to privately share selected household budget spaces with invited 
 
 - Given a built TBB app, its Info.plist contains boolean `CKSharingSupported = true` so iOS can route CloudKit invitation URLs to the app; CI checks the built simulator bundle.
 
+- Given two budget spaces have identical names, the picker distinguishes private, owner-shared, and participant-shared spaces. The owner can rename their space using a nonblank name of at most 80 characters; its shared name is synchronized to participants. Participants cannot rename another owner's space.
+
 ## Data and conflict rules
 
 - A `BudgetSpace` has a stable UUID, display name, owner/participant role, and private/shared scope. Accounts, categories, transactions, budget plans, and audit entries belong to exactly one space. Cross-space references are rejected.
