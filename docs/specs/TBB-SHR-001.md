@@ -15,6 +15,8 @@ Allow an owner to privately share selected household budget spaces with invited 
 - Given a user has no active iCloud account, is offline, or CloudKit is unavailable, when they attempt sharing, then TBB explains the condition, keeps private budgeting usable, and provides a retry without creating a TBB account.
 - Given a build lacks a configured CloudKit entitlement, when sharing is opened, then the app identifies the missing setup and does not claim that data is shared.
 
+- Given a built TBB app, its Info.plist contains boolean `CKSharingSupported = true` so iOS can route CloudKit invitation URLs to the app; CI checks the built simulator bundle.
+
 ## Data and conflict rules
 
 - A `BudgetSpace` has a stable UUID, display name, owner/participant role, and private/shared scope. Accounts, categories, transactions, budget plans, and audit entries belong to exactly one space. Cross-space references are rejected.
