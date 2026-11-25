@@ -11,6 +11,8 @@ public enum LedgerPersistenceError: Error, Equatable, Sendable {
     case sharingUnavailable
     case cloudContainerUnavailable
     case privateCloudStoreUnavailable
+    case invalidBudgetSpaceName
+    case budgetSpaceRenameNotAllowed
 }
 
 public struct StoredBudgetSpace: Identifiable, Equatable, Sendable {
@@ -115,6 +117,19 @@ public final class CoreDataLedgerStore {
 
     public func defaultBudgetSpace(baseCurrencyCode: String) throws -> StoredBudgetSpace {
         storedSpace(try defaultSpace(baseCurrencyCode: baseCurrencyCode))!
+    }
+
+    public func renameBudgetSpace(id: UUID, to name: String) throws {
+        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty, trimmed.count <= 80 else {
+            throw LedgerPersistenceError.invalidBudgetSpaceName
+        }
+        let space = try managedSpace(id: id)
+        guard space.objectID.persistentStore == privateStore else {
+            throw LedgerPersistenceError.budgetSpaceRenameNotAllowed
+        }
+        space.setValue(trimmed, forKey: "name")
+        try container.viewContext.save()
     }
 
     public func save(_ state: LedgerState) throws {
