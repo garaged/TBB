@@ -17,7 +17,7 @@ sha="$(git rev-parse HEAD)"
 expected_branch="feature/m5-icloud-sharing"
 remote_sha="$(git rev-parse --verify "refs/remotes/origin/$expected_branch" 2>/dev/null || true)"
 dirty="$(git status --porcelain)"
-container="$(/usr/bin/plutil -extract com.apple.developer.icloud-container-identifiers.0 raw -o - TBB.entitlements 2>/dev/null || printf 'Unavailable; inspect TBB.entitlements')"
+container="$(python3 -c 'import plistlib; print(plistlib.load(open("TBB.entitlements", "rb"))["com.apple.developer.icloud-container-identifiers"][0])' 2>/dev/null || printf 'Unavailable; inspect TBB.entitlements')"
 
 printf '%s\n' 'Enter device models, OS versions, and network conditions as observed during testing.' >&2
 printf '%s\n' 'Do not enter account addresses, credentials, or invitation links.' >&2
