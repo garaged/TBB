@@ -12,6 +12,7 @@ final class LedgerViewModel: ObservableObject {
     @Published private(set) var errorMessage: String? = nil
     @Published private(set) var spaces: [StoredBudgetSpace] = []
     @Published private(set) var activeSpace: StoredBudgetSpace? = nil
+    @Published private(set) var householdRefreshMessage: String? = nil
 
     private var store: CoreDataLedgerStore?
     private let budgetNotifications = BudgetNotificationCoordinator()
@@ -177,14 +178,22 @@ final class LedgerViewModel: ObservableObject {
     }
 
     func refreshHouseholdData() {
+        guard let store else {
+            householdRefreshMessage = nil
+            errorMessage = "TBB could not access local budget storage."
+            return
+        }
         do {
+            try store.refreshLocalView()
             try refreshSpaces()
             if let activeSpace {
-                state = try store?.load(spaceID: activeSpace.id) ?? state
+                state = try store.load(spaceID: activeSpace.id)
             }
             budgetNotifications.refresh(state: state)
+            householdRefreshMessage = "Local data refreshed. iCloud sync happens automatically and may take time."
         } catch {
-            errorMessage = "TBB could not refresh household data."
+            householdRefreshMessage = nil
+            errorMessage = "TBB could not refresh household data. Please try again."
         }
     }
     #endif
