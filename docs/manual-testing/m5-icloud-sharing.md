@@ -28,6 +28,8 @@ Simulator validation may exercise the development path but does not replace the 
 3. On the owner simulator, tap **Share household budget**. The first Debug share attempt initializes TBB’s **Development** CloudKit schema; wait for it to complete, then retry if iCloud reports that the account is still becoming available.
 4. Do not add records manually, import a schema, reset the environment, or deploy schema changes to Production. Inspect the Development schema only after TBB completes its initialization.
 
+Refresh reloads the local store; it does not force iCloud to synchronize or confirm delivery to another device. Verify the refresh feedback states this distinction and that a failure is visible.
+
 ## Name and ownership checks
 
 1. With one private and one shared space bearing the same name, verify their picker labels distinguish their ownership and sharing status.
