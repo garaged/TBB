@@ -1,0 +1,31 @@
+# TBB-BKP-001 — Portable backup and restore
+
+## Intent
+
+People can export and recover budget data independently of a particular device or iCloud account. Restore must not silently overwrite a budget or modify a shared space.
+
+## Scope and acceptance
+
+- Export an explicitly selected budget space to a versioned portable file using the system document interface. Explain when the selected space contains household data shared by others.
+- Default to password-encrypted export; allow unencrypted export only with a clear warning. A backup password is supplied explicitly at export and restore, may be the same as the local unlock password, and is never stored in the archive or logs. Losing it makes the encrypted archive unrecoverable.
+- A backup contains the selected ledger's accounts, categories, transactions, budgets, base currency, and necessary version metadata. It does not include authentication material, CloudKit credentials, participant identities, share URLs, invitations, or share permissions.
+- Restore validates the complete archive and presents a non-mutating preview before confirmation. Corrupt, truncated, wrong-password, unsupported-version, oversized, malformed, and invalid-ledger inputs fail closed without changing existing data.
+- Restore creates a new independent private space with fresh space identity. It never writes into an existing private or shared space or recreates CloudKit sharing. A future replacement/merge operation requires its own design.
+- The restore commit is transactional: failure leaves existing data unchanged, and incomplete restored spaces do not appear. Restoring an archive twice creates separate copies only after explicit confirmation each time.
+- Encrypted exports use a vetted password KDF with random salt and versioned, bounded work parameters, and authenticated encryption with a fresh nonce. Authenticate envelope metadata; do not treat a plain checksum as authentication. Verify wrong passwords and modifications before parsing or persistence.
+- Handle sensitive content without recording amounts, notes, passwords, keys, or archive content in logs. Use appropriate protected temporary storage if temporary files are unavoidable and remove them on completion or failure.
+- Restore is available without network access. iCloud synchronization of the newly created private space remains subject to the app's normal synchronization behavior.
+- Automated coverage includes archive round trips, version handling, independently reproducible crypto vectors, malformed inputs and size/work limits, cross-space isolation, transactional failure, and plaintext-data leak checks. Manual acceptance covers iPhone and iPad export, fresh-install restore, wrong passwords, cancellation, offline operation, and shared-space isolation.
+
+## Decisions and open implementation work
+
+- Archive version and precise KDF/AEAD parameters must be specified with compatibility fixtures before shipping; use platform cryptographic primitives and perform security review.
+- Backup encryption password is distinct from device authentication. Reusing a local password is a user choice, not an automatic retrieval of the app-lock secret.
+- A digital signature cannot be assumed to establish archive authenticity without a trustworthy signing-key distribution and recovery design. Unencrypted backups must be labeled unauthenticated; encrypted backups receive password-based authenticity through AEAD.
+- Inventory permission implications for exporting shared data and document what is retained as a private copy.
+- M5 follow-up: scene cold-start invitation metadata and CloudKit acceptance errors require a separate correction before release; M6 must not claim they are resolved.
+
+## References
+
+- Apple CryptoKit AES-GCM authenticated encryption: https://developer.apple.com/documentation/cryptokit/aes/gcm
+- OWASP Cryptographic Storage Cheat Sheet: https://cheatsheetseries.owasp.org/cheatsheets/Cryptographic_Storage_Cheat_Sheet.html
