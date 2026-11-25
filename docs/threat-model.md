@@ -12,7 +12,7 @@ Financial records, balances, household membership, backup contents, local unlock
 | Lost/unattended device | Optional local password; Face ID/Touch ID unlock; automatic lock on configured lifecycle events | security integration tests |
 | Biometric unavailability | Device passcode/local-password fallback; no biometric secret is exposed to the app | integration tests |
 | Unauthorized household access | Invite-only CloudKit share; explicit participant roles; owner-managed removal | CloudKit/manual acceptance |
-| Data corruption or failed restore | Signed/versioned envelope, preflight validation, transactional restore, retained recovery diagnostics | fixture/property/restore tests |
+| Data corruption or failed restore | Versioned envelope, authenticated encryption when enabled, preflight validation, transactional restore, redacted recovery diagnostics | fixture/property/restore tests |
 | Backup disclosure | Optional password-based authenticated encryption; keys never persisted in the export | crypto vectors + wrong-password tests |
 | Conflict/offline edits | Stable IDs, idempotent mutations, persistent history, deterministic conflict policy | offline/sync fixtures |
 | Sensitive leakage through logs | Redacted structured diagnostics; no transaction descriptions/amounts in production logs | log-policy tests |
