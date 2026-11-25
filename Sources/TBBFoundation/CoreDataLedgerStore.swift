@@ -13,6 +13,7 @@ public enum LedgerPersistenceError: Error, Equatable, Sendable {
     case privateCloudStoreUnavailable
     case invalidBudgetSpaceName
     case budgetSpaceRenameNotAllowed
+    case unsavedChanges
 }
 
 public struct StoredBudgetSpace: Identifiable, Equatable, Sendable {
@@ -108,8 +109,8 @@ public final class CoreDataLedgerStore {
     }
 
     /// Refreshes this device's cached Core Data objects, without forcing an iCloud sync.
-    public func refreshLocalView() {
-        guard !container.viewContext.hasChanges else { return }
+    public func refreshLocalView() throws {
+        guard !container.viewContext.hasChanges else { throw LedgerPersistenceError.unsavedChanges }
         container.viewContext.refreshAllObjects()
     }
 
