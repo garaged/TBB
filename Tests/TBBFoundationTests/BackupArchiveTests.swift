@@ -33,6 +33,17 @@ import Testing
     #expect(result.ledger == expected)
 }
 
+@Test func readsIndependentV2ArchiveAndLegacyPlaintext() throws {
+    let encrypted = Data(#"{"version":2,"encrypted":true,"salt":"AAECAwQFBgcICQoLDA0ODw==","iterations":600000,"data":"AAECAwQFBgcICQoLbPXX0TmSYxtPyUtF2sztEq1fQwstZZqKadPyJODDckcNnA9SQjInHkDH0UsiW/ZFYDRoDMIrYVarWInb6egFSQjnxTVXs7s+i5AH5K8HD5q6r1VD4F2PN7C0Nrv9ADtUqsDi2sM0y6M41jWb5Bk+hOtMwhodBCXuCaCpw5uS2n60LsA="}"#.utf8)
+    let plain = Data(#"{"version":1,"encrypted":false,"data":"eyJuYW1lIjoiRml4dHVyZSIsImxlZGdlciI6eyJiYXNlQ3VycmVuY3lDb2RlIjoiTVhOIiwiYWNjb3VudHMiOltdLCJjYXRlZ29yaWVzIjpbXSwidHJhbnNhY3Rpb25zIjpbXSwiYnVkZ2V0cyI6W119fQ=="}"#.utf8)
+    let modern = try BackupArchive.preflight(encrypted, password: "fixture-ñ")
+    let legacy = try BackupArchive.preflight(plain, password: nil)
+    #expect(modern.isEncrypted)
+    #expect(!legacy.isEncrypted)
+    #expect(modern.ledger == legacy.ledger)
+    #expect(legacy.name == "Fixture")
+}
+
 private func envelope(_ bytes: Data) throws -> [String: Any] {
     try #require(JSONSerialization.jsonObject(with: bytes) as? [String: Any])
 }
@@ -56,6 +67,9 @@ private func envelope(_ bytes: Data) throws -> [String: Any] {
         try BackupArchive.decode(rewrite("encrypted", false), password: nil)
     }
     let sealedText = try #require(original["data"] as? String)
+    #expect(throws: BackupArchiveError.invalidPassword) {
+        try BackupArchive.decode(rewrite("version", 1), password: "test")
+    }
     var sealed = try #require(Data(base64Encoded: sealedText))
     sealed[sealed.count - 1] ^= 1
     #expect(throws: BackupArchiveError.invalidPassword) {

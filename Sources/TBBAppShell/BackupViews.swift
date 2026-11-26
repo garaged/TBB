@@ -232,7 +232,7 @@ struct BackupRestoreView: View {
         password = ""
         start {
             let result = try await Task.detached(priority: .userInitiated) {
-                try BackupArchive.decode(file.bytes, password: secret)
+                try BackupArchive.preflight(file.bytes, password: secret)
             }.value
             try Task.checkCancellation()
             let prefix = String(localized: "Restored – ")

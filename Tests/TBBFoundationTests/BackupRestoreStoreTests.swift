@@ -67,7 +67,7 @@ import Testing
     try store.save(state, in: original.id)
     let stored = try store.load(spaceID: original.id)
     let archive = try BackupArchive.encode(name: original.name, ledger: stored, password: "recovery")
-    let preview = try BackupArchive.decode(archive, password: "recovery")
+    let preview = try BackupArchive.preflight(archive, password: "recovery")
     #expect(try store.budgetSpaces(baseCurrencyCode: "MXN") == [original])
     let copy = try store.restorePrivateCopy(preview, name: "Recovered")
     var changed = try store.load(spaceID: copy)

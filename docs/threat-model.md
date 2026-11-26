@@ -27,4 +27,4 @@ An encrypted file exposes its version, protection mode, work factor, salt and ap
 
 The codec accepts a space name and ledger snapshot. It has no reference to the device credential store, CloudKit share, participant list or mutation audit log. The app supplies a generic default filename, holds passwords and preview data in memory and releases them on dismissal. The document provider controls the exported file and any provider-managed copies. Exporting a shared budget creates a copy outside the owner's revocation controls.
 
-Review evidence includes the independent v1 fixture, header and ciphertext modification tests, absence of plaintext markers, and an injected persistence failure. Device acceptance covers the OS picker, background locking and recovery with a second account.
+Review evidence includes independent v1 and v2 fixtures, header and ciphertext modification tests, absence of plaintext markers, and an injected persistence failure. Device acceptance covers the OS picker, background locking and recovery with a second account.
