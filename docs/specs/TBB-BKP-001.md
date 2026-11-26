@@ -17,12 +17,15 @@ People can export and recover budget data independently of a particular device o
 - Restore is available without network access. iCloud synchronization of the newly created private space remains subject to the app's normal synchronization behavior.
 - Automated coverage includes archive round trips, version handling, independently reproducible crypto vectors, malformed inputs and size/work limits, cross-space isolation, transactional failure, and plaintext-data leak checks. Manual acceptance covers iPhone and iPad export, fresh-install restore, wrong passwords, cancellation, offline operation, and shared-space isolation.
 
-## Decisions and open implementation work
+## Archive v1 and compatibility
 
-- Archive version and precise KDF/AEAD parameters must be specified with compatibility fixtures before shipping; use platform cryptographic primitives and perform security review.
+- A `.tbbbackup` file is UTF-8 JSON. The keys `version` (integer 1), `encrypted` (boolean), and `data` (Base64 bytes) are required. Maximum file size is 16 MiB. The JSON payload (maximum 8 MiB) contains `name` and `ledger`. Financial values use integer minor units. Dates use the Foundation reference epoch, seconds since 2001-01-01T00:00:00Z.
+- In encrypted mode, `salt` contains 16 fresh random bytes in Base64 and `iterations` must equal 600000. PBKDF2-HMAC-SHA256 uses the password's exact UTF-8 bytes (1–1024 bytes) and yields a 32-byte key. AES-256-GCM stores a fresh 12-byte nonce, ciphertext and 16-byte tag, concatenated in that order. The authenticated data is the exact ASCII string `TBB-backup-v1-PBKDF2-SHA256-AES-GCM`. Version, protection mode and work factor select this single permitted suite. The salt participates in key derivation.
+- In unencrypted mode, `data` is the payload and `checksum` is its Base64 SHA-256 digest for detecting accidental damage. An editor can recompute it. TBB labels the file unauthenticated during import as well as export. Encrypted and unencrypted headers are mutually exclusive. Unknown versions require a future explicit reader.
+- The compatibility fixture in `BackupArchiveTests.swift` was produced independently of TBB using Python PBKDF2 and AESGCM. File selection, preflight, cancellation and password retries cannot write into Core Data. Only confirmation creates a private budget.
 - Backup encryption password is distinct from device authentication. Reusing a local password is a user choice, not an automatic retrieval of the app-lock secret.
 - A digital signature cannot be assumed to establish archive authenticity without a trustworthy signing-key distribution and recovery design. Unencrypted backups must be labeled unauthenticated; encrypted backups receive password-based authenticity through AEAD.
-- Inventory permission implications for exporting shared data and document what is retained as a private copy.
+- Owners and participants can export the locally readable contents of the selected budget. Removing a participant later cannot revoke an exported file. Restore imports the ledger snapshot and starts a fresh space and mutation history.
 - M5 follow-up: scene cold-start invitation metadata and CloudKit acceptance errors require a separate correction before release; M6 must not claim they are resolved.
 
 ## References

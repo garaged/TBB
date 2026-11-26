@@ -16,12 +16,26 @@ private struct BackupEnvelope: Codable {
     let encrypted: Bool
     let salt: Data?
     let iterations: Int?
+    let checksum: Data?
     let data: Data
 }
 
 private struct BackupPayload: Codable {
     let name: String
     let ledger: LedgerState
+}
+
+/// An authenticated (or explicitly unencrypted), validated snapshot. Only the codec constructs it.
+public struct BackupPreview: Sendable {
+    public let name: String
+    public let ledger: LedgerState
+    let storePayload: Data
+
+    fileprivate init(name: String, ledger: LedgerState) throws {
+        self.name = name
+        self.ledger = try BackupLedgerValidator.validate(ledger)
+        storePayload = try JSONEncoder().encode(ledger)
+    }
 }
 
 /// Portable archive codec. Never logs archive contents or credentials.
@@ -48,38 +62,63 @@ public enum BackupArchive {
             let key = try PBKDF2SHA256PasswordDeriver().derive(password: password, salt: salt, iterations: rounds)
             let sealed = try AES.GCM.seal(payload, using: SymmetricKey(data: key), authenticating: associatedData)
             guard let combined = sealed.combined else { throw BackupArchiveError.malformed }
-            envelope = BackupEnvelope(version: 1, encrypted: true, salt: salt, iterations: rounds, data: combined)
+            envelope = BackupEnvelope(version: 1, encrypted: true, salt: salt, iterations: rounds, checksum: nil, data: combined)
         } else {
-            envelope = BackupEnvelope(version: 1, encrypted: false, salt: nil, iterations: nil, data: payload)
+            envelope = BackupEnvelope(version: 1, encrypted: false, salt: nil, iterations: nil, checksum: Data(SHA256.hash(data: payload)), data: payload)
         }
         let output = try JSONEncoder().encode(envelope)
         guard output.count <= maximumBytes else { throw BackupArchiveError.tooLarge }
         return output
     }
 
-    public static func decode(_ bytes: Data, password: String?) throws -> (name: String, ledger: LedgerState) {
+    /// Inspects the protection mode without deriving a key or decoding private content.
+    public static func requiresPassword(_ bytes: Data) throws -> Bool {
+        try readEnvelope(bytes).encrypted
+    }
+
+    private static func readEnvelope(_ bytes: Data) throws -> BackupEnvelope {
         guard bytes.count <= maximumBytes else { throw BackupArchiveError.tooLarge }
-        guard let envelope = try? JSONDecoder().decode(BackupEnvelope.self, from: bytes) else { throw BackupArchiveError.malformed }
+        guard let envelope = try? JSONDecoder().decode(BackupEnvelope.self, from: bytes) else {
+            throw BackupArchiveError.malformed
+        }
         guard envelope.version == 1 else { throw BackupArchiveError.unsupportedVersion }
+        let overhead = envelope.encrypted ? 28 : 0
+        guard envelope.data.count <= maximumBytes / 2 + overhead else { throw BackupArchiveError.tooLarge }
+        if envelope.encrypted {
+            guard envelope.data.count >= overhead, envelope.salt?.count == 16,
+                  envelope.iterations == rounds, envelope.checksum == nil else {
+                throw BackupArchiveError.malformed
+            }
+        } else {
+            guard envelope.salt == nil, envelope.iterations == nil,
+                  envelope.checksum?.count == 32 else { throw BackupArchiveError.malformed }
+        }
+        return envelope
+    }
+
+    public static func decode(_ bytes: Data, password: String?) throws -> BackupPreview {
+        let envelope = try readEnvelope(bytes)
         let payload: Data
         if envelope.encrypted {
-            guard let salt = envelope.salt, salt.count == 16, envelope.iterations == rounds,
-                  let password, !password.isEmpty, password.utf8.count <= 1024 else { throw BackupArchiveError.invalidPassword }
+            guard let salt = envelope.salt, let password, !password.isEmpty,
+                  password.utf8.count <= 1024 else { throw BackupArchiveError.invalidPassword }
             let key = try PBKDF2SHA256PasswordDeriver().derive(password: password, salt: salt, iterations: rounds)
             do {
-                payload = try AES.GCM.open(AES.GCM.SealedBox(combined: envelope.data), using: SymmetricKey(data: key), authenticating: associatedData)
+                let box = try AES.GCM.SealedBox(combined: envelope.data)
+                payload = try AES.GCM.open(box, using: SymmetricKey(data: key), authenticating: associatedData)
             } catch {
                 throw BackupArchiveError.invalidPassword
             }
         } else {
-            guard envelope.salt == nil, envelope.iterations == nil else { throw BackupArchiveError.malformed }
+            guard password == nil, envelope.checksum == Data(SHA256.hash(data: envelope.data)) else {
+                throw BackupArchiveError.malformed
+            }
             payload = envelope.data
         }
-        guard payload.count <= maximumBytes / 2,
-              let decoded = try? JSONDecoder().decode(BackupPayload.self, from: payload),
+        guard let decoded = try? JSONDecoder().decode(BackupPayload.self, from: payload),
               !decoded.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
               decoded.name.count <= 80 else { throw BackupArchiveError.malformed }
-        return (decoded.name, try BackupLedgerValidator.validate(decoded.ledger))
+        return try BackupPreview(name: decoded.name, ledger: decoded.ledger)
     }
 }
 #endif

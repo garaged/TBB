@@ -1,4 +1,5 @@
 #if canImport(CoreData)
+import CoreData
 import Foundation
 import Testing
 @testable import TBBFoundation
@@ -30,5 +31,25 @@ import Testing
     }
     #expect(try store.budgetSpaces(baseCurrencyCode: "MXN").count == 1)
     #expect(try store.load(spaceID: original.id) == originalState)
+}
+
+@MainActor @Test func failedSaveRollsBackAndExplicitRetriesCreateIndependentCopies() throws {
+    enum SaveFailure: Error { case unavailable }
+    let store = try CoreDataLedgerStore(inMemory: true)
+    let original = try store.defaultBudgetSpace(baseCurrencyCode: "MXN")
+    let state = try store.load(spaceID: original.id)
+    let payload = try JSONEncoder().encode(state)
+    #expect(throws: SaveFailure.unavailable) {
+        try store.insertPrivateCopy(payload, name: "Copy") { context in
+            #expect(context.insertedObjects.count == 1)
+            throw SaveFailure.unavailable
+        }
+    }
+    #expect(try store.budgetSpaces(baseCurrencyCode: "MXN") == [original])
+    let first = try store.restorePrivateCopy(state, name: "Copy")
+    let second = try store.restorePrivateCopy(state, name: "Copy")
+    #expect(Set([original.id, first, second]).count == 3)
+    #expect(try store.defaultBudgetSpace(baseCurrencyCode: "MXN").id == original.id)
+    #expect(try store.load(spaceID: original.id) == state)
 }
 #endif

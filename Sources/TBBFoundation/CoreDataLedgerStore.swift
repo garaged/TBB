@@ -129,13 +129,23 @@ public final class CoreDataLedgerStore {
     /// Creates an independent private space in a single store transaction.
     /// Call only after archive authentication and explicit restore confirmation.
     public func restorePrivateCopy(_ state: LedgerState, name: String) throws -> UUID {
+        let validated = try BackupLedgerValidator.validate(state)
+        return try insertPrivateCopy(JSONEncoder().encode(validated), name: name)
+    }
+
+    #if canImport(CryptoKit) && canImport(CommonCrypto) && canImport(Security)
+    public func restorePrivateCopy(_ preview: BackupPreview, name: String) throws -> UUID {
+        try insertPrivateCopy(preview.storePayload, name: name)
+    }
+    #endif
+
+    func insertPrivateCopy(_ payload: Data, name: String,
+                           save: @Sendable (NSManagedObjectContext) throws -> Void = { try $0.save() }) throws -> UUID {
         let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty, trimmed.count <= 80 else {
             throw LedgerPersistenceError.invalidBudgetSpaceName
         }
         guard let privateStore else { throw LedgerPersistenceError.privateCloudStoreUnavailable }
-        let validated = try BackupLedgerValidator.validate(state)
-        let payload = try JSONEncoder().encode(validated)
         let id = UUID()
         let context = container.newBackgroundContext()
         try context.performAndWait {
@@ -147,7 +157,12 @@ public final class CoreDataLedgerStore {
             space.setValue(payload, forKey: "initialState")
             space.setValue(Int64(0), forKey: "logicalClock")
             space.setValue(Date.now, forKey: "createdAt")
-            try context.save()
+            do {
+                try save(context)
+            } catch {
+                context.rollback()
+                throw error
+            }
         }
         return id
     }
@@ -241,6 +256,7 @@ public final class CoreDataLedgerStore {
     private func defaultSpace(baseCurrencyCode: String) throws -> NSManagedObject {
         let request = NSFetchRequest<NSManagedObject>(entityName: "BudgetSpace")
         request.fetchLimit = 1
+        request.sortDescriptors = [NSSortDescriptor(key: "createdAt", ascending: true)]
         request.affectedStores = privateStore.map { [$0] }
 
         if let existing = try container.viewContext.fetch(request).first {

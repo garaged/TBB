@@ -66,6 +66,17 @@ struct HouseholdHomeView: View {
                 }
             }
 
+            Section("Backup and restore") {
+                if let space = model.activeSpace {
+                    NavigationLink("Export selected budget") {
+                        BackupExportView(model: model, space: space)
+                    }
+                }
+                NavigationLink("Restore from a backup") {
+                    BackupRestoreView(model: model)
+                }
+            }
+
             Section("Privacy") {
                 Text("Privacy Mode masks amounts only on this device. It does not change the shared records or another participant’s display.")
                     .font(.footnote)

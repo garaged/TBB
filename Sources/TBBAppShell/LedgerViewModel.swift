@@ -122,6 +122,25 @@ final class LedgerViewModel: ObservableObject {
         }
     }
 
+    func exportSnapshot(for id: UUID) throws -> LedgerState {
+        guard let store else { throw LedgerPersistenceError.unknownBudgetSpace }
+        return try store.load(spaceID: id)
+    }
+
+    #if canImport(CommonCrypto) && canImport(CryptoKit) && canImport(Security)
+    func restore(_ preview: BackupPreview, name: String) throws {
+        guard let store else { throw LedgerPersistenceError.privateCloudStoreUnavailable }
+        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        let id = try store.restorePrivateCopy(preview, name: trimmed)
+        // The insert has committed. Publishing the validated snapshot needs no second fetch.
+        let copy = StoredBudgetSpace(id: id, name: trimmed, scope: .privateSpace, role: .owner)
+        spaces.append(copy)
+        activeSpace = copy
+        state = preview.ledger
+        budgetNotifications.refresh(state: state)
+    }
+    #endif
+
     func selectBudgetSpace(id: UUID) {
         do {
             guard let selected = spaces.first(where: { $0.id == id }) else { return }
