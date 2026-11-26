@@ -44,3 +44,18 @@ import Testing
         try BackupLedgerValidator.validate(ledger)
     }
 }
+
+@Test func backupLedgerValidationRejectsOversizedCollectionsAndNotes() throws {
+    let account = try LedgerAccount(name: "Cash", kind: .cash, currencyCode: "MXN")
+    let oversized = try LedgerState(baseCurrencyCode: "MXN", accounts: Array(repeating: account, count: 1_001))
+    #expect(throws: BackupValidationError.invalidLedger) {
+        try BackupLedgerValidator.validate(oversized)
+    }
+
+    let category = LedgerCategory(name: "Food", kind: .expense)
+    let transaction = LedgerTransaction(kind: .expense, amount: try Money(minorUnits: 1, currencyCode: "MXN"), accountID: account.id, categoryID: category.id, occurredAt: .now, note: String(repeating: "x", count: 4_097))
+    let ledger = try LedgerState(baseCurrencyCode: "MXN", accounts: [account], categories: [category], transactions: [transaction])
+    #expect(throws: BackupValidationError.invalidLedger) {
+        try BackupLedgerValidator.validate(ledger)
+    }
+}
