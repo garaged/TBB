@@ -1,0 +1,479 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "Accounts": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cuentas"
+          }
+        }
+      }
+    },
+    "Anyone with this file can read and change your budget.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cualquier persona con este archivo puede leer y modificar tu presupuesto."
+          }
+        }
+      }
+    },
+    "Archived budget": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Presupuesto del respaldo"
+          }
+        }
+      }
+    },
+    "Backup and restore": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Respaldo y restauración"
+          }
+        }
+      }
+    },
+    "Backup password": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Contraseña del respaldo"
+          }
+        }
+      }
+    },
+    "Backup saved.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Respaldo guardado."
+          }
+        }
+      }
+    },
+    "Budget plans": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Planes de presupuesto"
+          }
+        }
+      }
+    },
+    "Cancel": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cancelar"
+          }
+        }
+      }
+    },
+    "Cancel restore": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cancelar restauración"
+          }
+        }
+      }
+    },
+    "Categories": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Categorías"
+          }
+        }
+      }
+    },
+    "Check the backup password. A damaged encrypted file can also cause this error.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Revisa la contraseña del respaldo. Un archivo cifrado dañado también puede causar este error."
+          }
+        }
+      }
+    },
+    "Choose backup file": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Elegir archivo de respaldo"
+          }
+        }
+      }
+    },
+    "Choose save location": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Elegir dónde guardar"
+          }
+        }
+      }
+    },
+    "Confirm backup password": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Confirmar contraseña del respaldo"
+          }
+        }
+      }
+    },
+    "Confirm to create a separate private budget. Your existing budgets and household sharing stay as they are.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Confirma para crear un presupuesto privado independiente. Tus presupuestos y los permisos compartidos se conservan."
+          }
+        }
+      }
+    },
+    "Copy name": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nombre de la copia"
+          }
+        }
+      }
+    },
+    "Create private copy": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Crear copia privada"
+          }
+        }
+      }
+    },
+    "Currency": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Moneda"
+          }
+        }
+      }
+    },
+    "Encrypt with a password": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cifrar con contraseña"
+          }
+        }
+      }
+    },
+    "Export an unencrypted backup?": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "¿Exportar un respaldo sin cifrar?"
+          }
+        }
+      }
+    },
+    "Export budget": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Exportar presupuesto"
+          }
+        }
+      }
+    },
+    "Export readable file": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Exportar archivo sin cifrar"
+          }
+        }
+      }
+    },
+    "Export selected budget": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Exportar presupuesto seleccionado"
+          }
+        }
+      }
+    },
+    "File protection": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Protección del archivo"
+          }
+        }
+      }
+    },
+    "Keep this password for recovery. Resetting your TBB lock cannot recover a lost backup password.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Guarda esta contraseña para restaurar el respaldo. Restablecer el bloqueo de TBB no recupera la contraseña del archivo."
+          }
+        }
+      }
+    },
+    "New private budget": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nuevo presupuesto privado"
+          }
+        }
+      }
+    },
+    "Open backup": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Abrir respaldo"
+          }
+        }
+      }
+    },
+    "Preparing backup…": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Preparando respaldo…"
+          }
+        }
+      }
+    },
+    "Preview backup": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ver vista previa"
+          }
+        }
+      }
+    },
+    "Private copy created and selected.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Se creó y seleccionó la copia privada."
+          }
+        }
+      }
+    },
+    "Reading backup…": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Leyendo respaldo…"
+          }
+        }
+      }
+    },
+    "Restore backup": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Restaurar respaldo"
+          }
+        }
+      }
+    },
+    "Restore from a backup": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Restaurar desde un respaldo"
+          }
+        }
+      }
+    },
+    "Restore preview": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vista previa"
+          }
+        }
+      }
+    },
+    "Restored – ": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Restaurado – "
+          }
+        }
+      }
+    },
+    "Selected budget": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Presupuesto seleccionado"
+          }
+        }
+      }
+    },
+    "TBB could not complete the operation. Check file access and available storage.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "TBB no pudo completar la operación. Revisa el acceso al archivo y el espacio disponible."
+          }
+        }
+      }
+    },
+    "The backup exceeds the supported size.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El respaldo supera el tamaño permitido."
+          }
+        }
+      }
+    },
+    "The backup format or budget data is invalid.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El formato del respaldo o los datos del presupuesto no son válidos."
+          }
+        }
+      }
+    },
+    "This backup version requires a different version of TBB.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Este respaldo requiere otra versión de TBB."
+          }
+        }
+      }
+    },
+    "This export includes household data. Anyone with a readable copy can keep it after sharing ends.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Este respaldo incluye datos del hogar. Quien tenga una copia legible podrá conservarla aunque dejes de compartir el presupuesto."
+          }
+        }
+      }
+    },
+    "This file is unencrypted and unauthenticated. Only restore it if you trust its source.": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Este archivo está sin cifrar y su autenticidad no está verificada. Restáuralo solo si confías en su origen."
+          }
+        }
+      }
+    },
+    "Transactions": {
+      "extractionState": "manual",
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Movimientos"
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

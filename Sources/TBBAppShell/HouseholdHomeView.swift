@@ -4,8 +4,9 @@ import SwiftUI
 import TBBFoundation
 import UIKit
 
-struct HouseholdHomeView: View {
+struct HouseholdHomeView<Controls: ToolbarContent>: View {
     @ObservedObject var model: LedgerViewModel
+    let securityControls: () -> Controls
     @State private var shareSession: ShareSheetSession?
     @State private var showingRename = false
     @State private var newName = ""
@@ -63,6 +64,19 @@ struct HouseholdHomeView: View {
                         .font(.footnote)
                         .foregroundStyle(.secondary)
                         .accessibilityAddTraits(.isStaticText)
+                }
+            }
+
+            Section("Backup and restore") {
+                if let space = model.activeSpace {
+                    NavigationLink("Export selected budget") {
+                        BackupExportView(model: model, space: space)
+                            .toolbar { securityControls() }
+                    }
+                }
+                NavigationLink("Restore from a backup") {
+                    BackupRestoreView(model: model)
+                            .toolbar { securityControls() }
                 }
             }
 

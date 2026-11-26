@@ -29,6 +29,12 @@ The icon is authored as a version-controlled vector and rendered locally into th
 
 The generated app target supports iPhone and iPad. The watchOS companion target is added with the Watch milestone, after the ledger and privacy-safe glance contracts exist.
 
+## Back up or recover a budget
+
+On iPhone or iPad, open **Household**, select a budget, then tap **Export selected budget**. TBB exports the data currently available on this device. Save the file in Files, on iCloud Drive or with another document provider. Keep the backup password somewhere you can recover it. You can use a different password from your TBB lock.
+
+To recover, open **Household → Restore from a backup**, choose the file, and enter its password if prompted. Review the currency and record counts, give the copy a name and tap **Create private copy**. An offline restore works with a file already downloaded to the device. You can export a shared budget you can read. A restored copy belongs to the person restoring it and starts with its own sharing settings.
+
 ## License
 
 TBB is licensed under the [Mozilla Public License 2.0](LICENSE) (MPL-2.0).

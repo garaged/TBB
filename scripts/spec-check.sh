@@ -12,6 +12,8 @@ required=(
   docs/specs/TBB-FND-001.md
   docs/specs/TBB-CUR-001.md
   docs/specs/TBB-I18N-001.md
+  docs/specs/TBB-BKP-001.md
+  docs/manual-testing/m6-backup-restore.md
   docs/specs/TBB-SHR-001.md
   docs/decisions/ADR-0001-cloudkit-household-sharing.md
 )
@@ -20,7 +22,7 @@ for file in "${required[@]}"; do
   test -f "$file" || { echo "Missing required foundation artifact: $file" >&2; exit 1; }
 done
 
-for id in TBB-FND-001 TBB-CUR-001 TBB-I18N-001 TBB-SHR-001; do
+for id in TBB-FND-001 TBB-CUR-001 TBB-I18N-001 TBB-SHR-001 TBB-BKP-001; do
   grep -q "$id" docs/specs/registry.md
 done
 grep -q 'ADR-0001' docs/traceability.md

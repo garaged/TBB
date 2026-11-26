@@ -28,3 +28,11 @@ jobs:
         run: |
           plist="$RUNNER_TEMP/tbb-derived/Build/Products/Debug-iphonesimulator/TBB.app/Info.plist"
           test "$(/usr/libexec/PlistBuddy -c 'Print :CKSharingSupported' "$plist")" = "true"
+      - name: Verify backup type and Spanish resources in built app
+        run: |
+          app="$RUNNER_TEMP/tbb-derived/Build/Products/Debug-iphonesimulator/TBB.app"
+          type=$(/usr/libexec/PlistBuddy -c 'Print :UTExportedTypeDeclarations:0:UTTypeIdentifier' "$app/Info.plist")
+          ext=$(/usr/libexec/PlistBuddy -c 'Print :UTExportedTypeDeclarations:0:UTTypeTagSpecification:public.filename-extension:0' "$app/Info.plist")
+          test "$type" = org.garaged.tbb.backup
+          test "$ext" = tbbbackup
+          test -s "$app/es.lproj/Localizable.strings"
