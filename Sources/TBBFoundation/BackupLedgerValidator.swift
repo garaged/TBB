@@ -11,6 +11,12 @@ public enum BackupLedgerValidator {
         func validCurrency(_ code: String) -> Bool {
             code.utf8.count == 3 && code.utf8.allSatisfy { $0 >= 65 && $0 <= 90 }
         }
+        // Bound work before constructing sets or performing reference validation.
+        guard ledger.accounts.count <= 1_000, ledger.categories.count <= 1_000,
+              ledger.budgets.count <= 1_000, ledger.transactions.count <= 10_000,
+              ledger.transactions.allSatisfy({ $0.note.utf8.count <= 4_096 }) else {
+            throw BackupValidationError.invalidLedger
+        }
         guard validCurrency(ledger.baseCurrencyCode),
               Set(ledger.accounts.map(\.id)).count == ledger.accounts.count,
               Set(ledger.categories.map(\.id)).count == ledger.categories.count,
