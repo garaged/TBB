@@ -9,7 +9,7 @@
 | TBB-CUR-001 | Currency and exchange-rate integrity | Draft | Money/property/migration tests |
 | TBB-I18N-001 | Localization, regional behavior, and accessible presentation | Draft | Locale/UI/accessibility tests |
 | TBB-SHR-001 | Household sharing | In progress | Space, sync, audit, and two-Apple-Account acceptance tests |
-| TBB-BKP-001 | Backup and restore | In progress | Compatibility/restore tests and M6 manual acceptance (pending) |
+| TBB-BKP-001 | Backup and restore | Implemented, device acceptance pending | Compatibility/restore tests and M6 manual acceptance (pending) |
 | TBB-UX-001 | Dashboard time navigation | Implemented | Navigator/insight tests + M3 manual acceptance |
 
 Specifications are normative once accepted. Implementation tasks and tests must cite their IDs.

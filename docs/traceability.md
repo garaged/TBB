@@ -9,5 +9,5 @@
 | Ledger rejects invalid mutations | — | TBB-DAT-001 | ledger unit tests |
 | Currency/rate history never changes silently | — | TBB-CUR-001 | multi-currency fixtures |
 | Localization changes presentation, not meaning | — | TBB-I18N-001 | locale/time-zone/UI tests |
-| Recoverable encrypted backups | — | TBB-BKP-001 | restore vectors |
+| Recoverable encrypted backups | — | TBB-BKP-001 | BackupArchiveTests (v1 fixture, tamper, bounds), BackupLedgerValidationTests, BackupRestoreStoreTests (rollback and isolation), [device checklist](manual-testing/m6-backup-restore.md) |
 | Quality before merge | — | TBB-FND-001 | CI + PR evidence |

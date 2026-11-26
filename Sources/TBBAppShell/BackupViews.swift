@@ -88,6 +88,9 @@ struct BackupExportView: View {
             }
             document = nil
         }
+        .onChange(of: encrypted) { _, enabled in
+            if !enabled { password = ""; confirmation = "" }
+        }
         .onChange(of: exporting) { _, presented in if !presented { document = nil } }
         .onDisappear { work?.cancel(); work = nil; password = ""; confirmation = "" }
     }
@@ -166,6 +169,9 @@ struct BackupRestoreView: View {
             }
             if let preview {
                 Section("Restore preview") {
+                    if !preview.isEncrypted {
+                        Text("This file is unencrypted and unauthenticated. Only restore it if you trust its source.")
+                    }
                     LabeledContent("Archived budget", value: preview.name)
                     LabeledContent("Currency", value: preview.ledger.baseCurrencyCode)
                     LabeledContent("Accounts", value: preview.ledger.accounts.count.formatted())

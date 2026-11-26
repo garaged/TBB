@@ -48,7 +48,7 @@ public struct TBBRootView: View {
 
             #if canImport(CloudKit) && canImport(UIKit)
             NavigationStack {
-                HouseholdHomeView(model: ledgerModel)
+                HouseholdHomeView(model: ledgerModel) { globalToolbar }
                     .toolbar { globalToolbar }
             }
             .tabItem { Label("Household", systemImage: "person.2") }

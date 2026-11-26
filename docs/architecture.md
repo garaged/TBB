@@ -25,6 +25,23 @@ flowchart TD
 
 The CloudKit share is Apple-managed infrastructure, not a TBB service. There is no public financial-data database and no TBB identity provider. Each device keeps its own local lock and Privacy Mode state.
 
+## Portable recovery
+
+The Files interface moves one local ledger projection at a time. Encoding, file reads, password derivation, authentication and snapshot validation run outside the UI actor. The restored space receives a new identity at commit. Ledger record IDs stay stable inside that space so account, category and transaction references survive recovery.
+
+```mermaid
+flowchart TD
+    F["Selected file"] --> H{"Protection mode"}
+    H -->|Encrypted| A["Verify GCM tag with password"]
+    H -->|Unencrypted| C["Warn and check digest"]
+    A --> V["Validate ledger and preview"]
+    C --> V
+    V -->|Cancel| D["Discard preview"]
+    V -->|Confirm| S["Save to private store"]
+    S -->|Success| P["Select new private budget"]
+    S -->|Failure| R["Roll back insertion"]
+```
+
 ## Module rules
 
 | Module | May depend on | Must not depend on |

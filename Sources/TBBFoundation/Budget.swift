@@ -88,17 +88,21 @@ public enum BudgetInsights {
             )
         }
 
-        var carriedMinorUnits: Int64 = 0
-        var previousNavigator = DashboardNavigator(period: plan.cadence.dashboardPeriod, anchor: firstRange.start, timeZone: timeZone)
-        var safetyCounter = 0
-
-        while previousNavigator.range.start < activeRange.start {
-            let previousSpent = expenseMinorUnits(categoryID: plan.categoryID, state: state, range: previousNavigator.range)
-            carriedMinorUnits += plan.plannedMinorUnits - previousSpent
-            previousNavigator = previousNavigator.moving(by: 1)
-            safetyCounter += 1
-            precondition(safetyCounter < 10_000, "Budget period iteration exceeded safe bounds")
+        // A restored plan may span decades. Compute elapsed periods once, and scan
+        // historical expenses once regardless of how old the plan is.
+        var calendar = Calendar.autoupdatingCurrent
+        calendar.timeZone = timeZone
+        let component: Calendar.Component
+        switch plan.cadence {
+        case .week: component = .weekOfYear
+        case .month, .quarter: component = .month
+        case .year: component = .year
         }
+        let elapsed = calendar.dateComponents([component], from: firstRange.start, to: activeRange.start).value(for: component) ?? 0
+        let periods = plan.cadence == .quarter ? elapsed / 3 : elapsed
+        let history = DashboardDateRange(start: firstRange.start, endExclusive: activeRange.start)
+        let historicalSpend = expenseMinorUnits(categoryID: plan.categoryID, state: state, range: history)
+        let carriedMinorUnits = Int64(periods) * plan.plannedMinorUnits - historicalSpend
 
         let spentMinorUnits = expenseMinorUnits(categoryID: plan.categoryID, state: state, range: activeRange)
         let availableMinorUnits = carriedMinorUnits + plan.plannedMinorUnits

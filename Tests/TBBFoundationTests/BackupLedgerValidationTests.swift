@@ -59,3 +59,22 @@ import Testing
         try BackupLedgerValidator.validate(ledger)
     }
 }
+
+@Test func restoreRejectsCombinedOverviewBalanceOverflow() throws {
+    let first = try LedgerAccount(name: "A", kind: .cash, currencyCode: "USD", openingBalanceMinorUnits: .max)
+    let second = try LedgerAccount(name: "B", kind: .cash, currencyCode: "USD", openingBalanceMinorUnits: 1)
+    let state = try LedgerState(baseCurrencyCode: "USD", accounts: [first, second])
+    #expect(throws: BackupValidationError.invalidLedger) { try BackupLedgerValidator.validate(state) }
+}
+
+@Test func oldWeeklyPlanCanBeOpenedAfterRestore() throws {
+    let zone = try #require(TimeZone(secondsFromGMT: 0))
+    let start = Date(timeIntervalSince1970: -6_200_000_000)
+    let category = LedgerCategory(name: "Bills", kind: .expense)
+    let plan = BudgetPlan(categoryID: category.id, cadence: .week, plannedMinorUnits: 10, startsAt: start)
+    let state = try LedgerState(baseCurrencyCode: "MXN", categories: [category], budgets: [plan])
+    let checked = try BackupLedgerValidator.validate(state)
+    let anchor = start.addingTimeInterval(10_001 * 7 * 86400)
+    let progress = BudgetInsights.progress(plan: plan, state: checked, anchor: anchor, timeZone: zone)
+    #expect(progress.availableMinorUnits == 100_020)
+}

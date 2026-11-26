@@ -32,3 +32,29 @@ People can export and recover budget data independently of a particular device o
 
 - Apple CryptoKit AES-GCM authenticated encryption: https://developer.apple.com/documentation/cryptokit/aes/gcm
 - OWASP Cryptographic Storage Cheat Sheet: https://cheatsheetseries.owasp.org/cheatsheets/Cryptographic_Storage_Cheat_Sheet.html
+
+### Compatibility fixture inputs
+
+The fixture in `readsIndependentV1Archive` uses this exact UTF-8 payload with no trailing newline.
+
+```json
+{"name":"Fixture","ledger":{"baseCurrencyCode":"MXN","accounts":[],"categories":[],"transactions":[],"budgets":[]}}
+```
+
+To reproduce the fixture's `data` field with Python and the `cryptography` package, assign the payload bytes above to `payload` and run the following. Fixed randomness is confined to this fixture.
+
+```python
+import base64
+import hashlib
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+
+salt = bytes(range(16))
+nonce = bytes(range(12))
+key = hashlib.pbkdf2_hmac("sha256", "fixture-ñ".encode("utf-8"), salt, 600_000, 32)
+aad = b"TBB-backup-v1-PBKDF2-SHA256-AES-GCM"
+print(base64.b64encode(nonce + AESGCM(key).encrypt(nonce, payload, aad)).decode("ascii"))
+```
+
+### Validation limits
+
+V1 supports up to 1,000 accounts, categories and budget plans each, 10,000 transactions, 4,096 UTF-8 bytes per note and 80 characters per space name. Dates must fit Foundation's `distantPast...distantFuture`. Validation checks references, currencies, unique identities, balance accumulation and aggregate arithmetic before preview. For ledgers with budget plans, total expense minor units must fit a thousandfold scale for progress. A recurring plan must fit one million allocations in signed 64-bit minor units. Exports over these limits fail with an error. TBB never truncates the selected ledger to fit.

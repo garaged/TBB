@@ -25,71 +25,62 @@ public enum BackupLedgerValidator {
             throw BackupValidationError.invalidLedger
         }
 
+        let dateRange = Date.distantPast...Date.distantFuture
         var checked = try LedgerState(baseCurrencyCode: ledger.baseCurrencyCode)
         do {
             for account in ledger.accounts {
                 guard validCurrency(account.currencyCode) else { throw BackupValidationError.invalidLedger }
                 try checked.addAccount(account)
             }
-            for category in ledger.categories {
-                try checked.addCategory(category)
-            }
+            for category in ledger.categories { try checked.addCategory(category) }
             for budget in ledger.budgets {
-                guard budget.startsAt.timeIntervalSinceReferenceDate.isFinite else { throw BackupValidationError.invalidLedger }
+                // Reserve headroom for rollover across the supported calendar range.
+                guard dateRange.contains(budget.startsAt),
+                      budget.plannedMinorUnits <= Int64.max / 1_000_000 else { throw BackupValidationError.invalidLedger }
                 try checked.addBudget(budget)
             }
-            for transaction in ledger.transactions {
-                guard validCurrency(transaction.amount.currencyCode),
-                      transaction.occurredAt.timeIntervalSinceReferenceDate.isFinite else {
-                    throw BackupValidationError.invalidLedger
-                }
-                switch transaction.kind {
-                case .expense:
-                    guard let category = transaction.categoryID, transaction.counterpartyAccountID == nil else {
-                        throw BackupValidationError.invalidLedger
-                    }
-                    try checked.recordExpense(amount: transaction.amount, accountID: transaction.accountID, categoryID: category, occurredAt: transaction.occurredAt, note: transaction.note)
-                case .income:
-                    guard let category = transaction.categoryID, transaction.counterpartyAccountID == nil else {
-                        throw BackupValidationError.invalidLedger
-                    }
-                    try checked.recordIncome(amount: transaction.amount, accountID: transaction.accountID, categoryID: category, occurredAt: transaction.occurredAt, note: transaction.note)
-                case .transfer:
-                    guard let destination = transaction.counterpartyAccountID, transaction.categoryID == nil else {
-                        throw BackupValidationError.invalidLedger
-                    }
-                    try checked.recordTransfer(amount: transaction.amount, fromAccountID: transaction.accountID, toAccountID: destination, occurredAt: transaction.occurredAt, note: transaction.note)
-                }
-            }
-        } catch {
-            throw BackupValidationError.invalidLedger
+        } catch { throw BackupValidationError.invalidLedger }
+
+        func add(_ a: Int64, _ b: Int64) throws -> Int64 {
+            let sum = a.addingReportingOverflow(b)
+            guard !sum.overflow else { throw BackupValidationError.invalidLedger }
+            return sum.partialValue
         }
 
-        // Check the exact accumulation order used by LedgerState.balance before restore.
+        let accounts = Dictionary(uniqueKeysWithValues: ledger.accounts.map { ($0.id, $0.currencyCode) })
+        let categories = Dictionary(uniqueKeysWithValues: ledger.categories.map { ($0.id, $0.kind) })
+        var movements: [UUID: Int64] = [:]
+        var income: Int64 = 0
+        var expenses: Int64 = 0
+        for entry in ledger.transactions {
+            let amount = entry.amount.minorUnits
+            guard amount > 0, accounts[entry.accountID] == entry.amount.currencyCode,
+                  dateRange.contains(entry.occurredAt) else { throw BackupValidationError.invalidLedger }
+            switch entry.kind {
+            case .income, .expense:
+                let kind: CategoryKind = entry.kind == .income ? .income : .expense
+                guard let id = entry.categoryID, categories[id] == kind,
+                      entry.counterpartyAccountID == nil else { throw BackupValidationError.invalidLedger }
+                if entry.kind == .income {
+                    income = try add(income, amount)
+                } else {
+                    expenses = try add(expenses, amount)
+                }
+            case .transfer:
+                guard entry.categoryID == nil, let destination = entry.counterpartyAccountID,
+                      destination != entry.accountID, accounts[destination] == entry.amount.currencyCode else {
+                    throw BackupValidationError.invalidLedger
+                }
+                movements[destination] = try add(movements[destination, default: 0], amount)
+            }
+            movements[entry.accountID] = try add(movements[entry.accountID, default: 0], entry.kind == .income ? amount : -amount)
+        }
+        // Budget progress scales spending by 1,000. Overview sums balances in account order.
+        guard ledger.budgets.isEmpty || expenses <= Int64.max / 1_000 else { throw BackupValidationError.invalidLedger }
+        var totalBalance: Int64 = 0
         for account in ledger.accounts {
-            var movements: Int64 = 0
-            for transaction in ledger.transactions {
-                var result: (partialValue: Int64, overflow: Bool)?
-                switch transaction.kind {
-                case .expense where transaction.accountID == account.id:
-                    result = movements.subtractingReportingOverflow(transaction.amount.minorUnits)
-                case .income where transaction.accountID == account.id:
-                    result = movements.addingReportingOverflow(transaction.amount.minorUnits)
-                case .transfer where transaction.accountID == account.id:
-                    result = movements.subtractingReportingOverflow(transaction.amount.minorUnits)
-                case .transfer where transaction.counterpartyAccountID == account.id:
-                    result = movements.addingReportingOverflow(transaction.amount.minorUnits)
-                default:
-                    break
-                }
-                if let result {
-                    guard !result.overflow else { throw BackupValidationError.invalidLedger }
-                    movements = result.partialValue
-                }
-            }
-            guard !account.openingBalanceMinorUnits.addingReportingOverflow(movements).overflow else {
-                throw BackupValidationError.invalidLedger
-            }
+            let balance = try add(account.openingBalanceMinorUnits, movements[account.id, default: 0])
+            totalBalance = try add(totalBalance, balance)
         }
         return ledger
     }

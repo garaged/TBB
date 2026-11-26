@@ -23,16 +23,36 @@ private struct BackupEnvelope: Codable {
 private struct BackupPayload: Codable {
     let name: String
     let ledger: LedgerState
+
+    private enum LedgerKeys: String, CodingKey { case budgets }
+
+    init(name: String, ledger: LedgerState) {
+        self.name = name
+        self.ledger = ledger
+    }
+
+    init(from decoder: Decoder) throws {
+        let fields = try decoder.container(keyedBy: CodingKeys.self)
+        let ledgerFields = try fields.nestedContainer(keyedBy: LedgerKeys.self, forKey: .ledger)
+        // Old on-device snapshots may omit budgets. Every portable v1 payload includes them.
+        guard ledgerFields.contains(.budgets), try !ledgerFields.decodeNil(forKey: .budgets) else {
+            throw BackupArchiveError.malformed
+        }
+        name = try fields.decode(String.self, forKey: .name)
+        ledger = try fields.decode(LedgerState.self, forKey: .ledger)
+    }
 }
 
 /// An authenticated (or explicitly unencrypted), validated snapshot. Only the codec constructs it.
 public struct BackupPreview: Sendable {
     public let name: String
     public let ledger: LedgerState
+    public let isEncrypted: Bool
     let storePayload: Data
 
-    fileprivate init(name: String, ledger: LedgerState) throws {
+    fileprivate init(name: String, ledger: LedgerState, isEncrypted: Bool) throws {
         self.name = name
+        self.isEncrypted = isEncrypted
         self.ledger = try BackupLedgerValidator.validate(ledger)
         storePayload = try JSONEncoder().encode(ledger)
     }
@@ -118,7 +138,7 @@ public enum BackupArchive {
         guard let decoded = try? JSONDecoder().decode(BackupPayload.self, from: payload),
               !decoded.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
               decoded.name.count <= 80 else { throw BackupArchiveError.malformed }
-        return try BackupPreview(name: decoded.name, ledger: decoded.ledger)
+        return try BackupPreview(name: decoded.name, ledger: decoded.ledger, isEncrypted: envelope.encrypted)
     }
 }
 #endif
