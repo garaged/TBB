@@ -126,6 +126,32 @@ public final class CoreDataLedgerStore {
         storedSpace(try defaultSpace(baseCurrencyCode: baseCurrencyCode))!
     }
 
+    /// Creates an independent private space in a single store transaction.
+    /// Call only after archive authentication and explicit restore confirmation.
+    public func restorePrivateCopy(_ state: LedgerState, name: String) throws -> UUID {
+        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty, trimmed.count <= 80 else {
+            throw LedgerPersistenceError.invalidBudgetSpaceName
+        }
+        guard let privateStore else { throw LedgerPersistenceError.privateCloudStoreUnavailable }
+        let validated = try BackupLedgerValidator.validate(state)
+        let payload = try JSONEncoder().encode(validated)
+        let id = UUID()
+        let context = container.newBackgroundContext()
+        try context.performAndWait {
+            let space = NSEntityDescription.insertNewObject(forEntityName: "BudgetSpace", into: context)
+            context.assign(space, to: privateStore)
+            space.setValue(id, forKey: "spaceID")
+            space.setValue(trimmed, forKey: "name")
+            space.setValue(BudgetSpaceScope.privateSpace.rawValue, forKey: "scope")
+            space.setValue(payload, forKey: "initialState")
+            space.setValue(Int64(0), forKey: "logicalClock")
+            space.setValue(Date.now, forKey: "createdAt")
+            try context.save()
+        }
+        return id
+    }
+
     public func renameBudgetSpace(id: UUID, to name: String) throws {
         let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty, trimmed.count <= 80 else {
